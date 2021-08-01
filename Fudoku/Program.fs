@@ -1,6 +1,4 @@
-﻿// Learn more about F# at http://docs.microsoft.com/dotnet/fsharp
-
-open System
+﻿open System.Text.RegularExpressions
 
 let memoize fn =
     let cache =
@@ -164,6 +162,8 @@ let isCompleteSolution (s: PuzzleSolution) = s.Count = allPositions.Length
 
 type CellFinder = Pos -> Cell
 
+let cellFinder pz = fun p -> Map.find p pz
+
 type RuleResult =
     | Solved of Digit
     | RemovePencils of Set<Digit>
@@ -188,10 +188,19 @@ let applyRuleResults results puzzle =
 
     applied
 
+let applyRules lookup rules =
+    let applyRule prior rule =
+        if List.isEmpty prior then
+            rule lookup
+        else
+            prior
+
+    rules |> List.fold applyRule List.empty
+
 let singlePencilRule lookup =
     allPositions
     |> List.map lookup
-    |> List.map (fun c -> (c, cellDigits c))
+    |> List.map (fun c -> (c, cellPencils c))
     |> List.filter (fun (_, ds) -> ds.Count = 1)
     |> List.map (fun (c, ds) -> c.position, Solved ds.MinimumElement)
 
@@ -214,11 +223,48 @@ let updatePencilsRule lookup =
 
     allGroups |> List.collect solveGroup
 
-// Define a function to construct a message to print
-let from whom = sprintf "from %s" whom
+let AllRules = [ updatePencilsRule; singlePencilRule ]
+
+let stringToPuzzle source =
+    let charToDigit c =
+        match c with
+        | '1' -> Some One
+        | '2' -> Some Two
+        | '3' -> Some Three
+        | '4' -> Some Four
+        | '5' -> Some Five
+        | '6' -> Some Six
+        | '7' -> Some Seven
+        | '8' -> Some Eight
+        | '9' -> Some Nine
+        | _ -> None
+
+    let createCell (pos, digit) =
+        match digit with
+        | Some d -> pos, solvedCell pos d
+        | None -> pos, starterCell pos
+
+    let filtered =
+        Regex.Replace(source, "[^0123456789.]", "")
+
+    let digits =
+        filtered |> Seq.map charToDigit |> Seq.toList
+
+    List.zip allPositions digits
+    |> List.map createCell
+    |> Map.ofList
 
 [<EntryPoint>]
-let main argv =
-    let message = from "F#" // Call the function
-    printfn "Hello world %s" message
+let main _ =
+    let source =
+        "5..86279.  .........  ...9.3.48 ......5..  1.97.52.4 ..7......  91.5.6...  .........  .86419..7"
+
+    let pz = stringToPuzzle source
+    let mutable pz2 = pz
+    let mutable results = applyRules (cellFinder pz2) AllRules
+
+    while results.Length > 0 do
+        pz2 <- applyRuleResults results pz2
+        results <- applyRules (cellFinder pz2) AllRules
+
     0 // return an integer exit code
