@@ -90,8 +90,12 @@ let boxrc r c =
 let row r = positions [ r ] allDigits
 let rowM = memoize row
 
+let allRows = allDigits |> List.map row
+
 let col c = positions allDigits [ c ]
 let colM = memoize col
+
+let allCols = allDigits |> List.map col
 
 let box d =
     let boxPositions s1 s2 = positions (segDigits s1) (segDigits s2)
@@ -110,6 +114,13 @@ let box d =
 let boxM = memoize box
 
 let boxp p = boxrc p.row p.col
+
+let allBoxes = allDigits |> List.map box
+
+let allGroups =
+    List.concat [ allRows
+                  allCols
+                  allBoxes ]
 
 let rowNeighbors p =
     List.filter (fun pp -> pp.col <> p.col) (row p.row)
@@ -135,10 +146,38 @@ let allNeighbors p =
 
 let allNeighborsM = memoize allNeighbors
 
-type Cell = { pencils: Set<Dig>; dig: Dig option }
+type Cell =
+    { pos: Pos
+      pencils: Set<Dig>
+      dig: Dig option }
 
 type Solution = Map<Pos, Dig option>
 type Puzzle = Map<Pos, Cell>
+
+type PuzzleSolution = { puzzle: Puzzle; solution: Solution }
+
+let solvedCell p d =
+    { pos = p
+      pencils = Set.empty
+      dig = (Some d) }
+
+let unsolvedCell p ds = { pos = p; pencils = ds; dig = None }
+
+let starterCell p = unsolvedCell p allDigitsSet
+
+let emptyPuzzle : Puzzle =
+    allPositions
+    |> List.map (fun p -> p, starterCell p)
+    |> Map.ofList
+
+let emptySolution : Solution =
+    allPositions
+    |> List.map (fun p -> p, None)
+    |> Map.ofList
+
+let emptyPuzzleSolution =
+    { puzzle = emptyPuzzle
+      solution = emptySolution }
 
 let isCompleteSolution (s: Solution) =
     let sizeOk = s.Count = allPositions.Length
@@ -156,6 +195,24 @@ type RuleResult =
 
 type Rule = CellFinder -> Pos * RuleResult list
 
+let applyRuleResults results puzzle =
+    let solve p d pz = Map.add p (solvedCell p d) pz
+
+    let remove p ds pz =
+        let currentPencils = (Map.find p pz).pencils
+        let changedPencils = currentPencils - ds
+        let changedCell = unsolvedCell p changedPencils
+        Map.add p changedCell pz
+
+    let applyResult pz (p, result) =
+        match result with
+        | Solved d -> solve p d pz
+        | RemoveDigits ds -> remove p ds pz
+
+    let applied = results |> List.fold applyResult puzzle
+
+    applied
+
 let cellDigits ps lookup =
     let cellDigits c =
         match c.dig with
@@ -167,18 +224,32 @@ let cellDigits ps lookup =
     |> Set.ofList
 
 let singlePencilRule lookup =
-    List.map (fun p -> p, (lookup p)) allPositions
-    |> List.filter (fun (_, c) -> c.pencils.Count = 1)
-    |> List.map (fun (p, c) -> p, Solved c.pencils.MinimumElement)
+    List.map lookup allPositions
+    |> List.filter (fun c -> c.pencils.Count = 1)
+    |> List.map (fun c -> c.pos, Solved c.pencils.MinimumElement)
 
 let updatePencilsRule lookup =
+    let solveGroup group =
+        let digits = cellDigits group lookup
+
+        let hasDigits c =
+            (Set.intersect c.pencils digits).Count > 0
+
+        group
+        |> List.map lookup
+        |> List.filter hasDigits
+        |> List.map (fun c -> c.pos, RemoveDigits digits)
+
+    allGroups |> List.collect solveGroup
+
+let slowUpdatePencilsRule lookup =
     let digitsToRemove p c =
         cellDigits (allNeighborsM p) lookup
         |> Set.intersect c.pencils
 
-    List.map (fun p -> p, (lookup p)) allPositions
-    |> List.filter (fun (_, c) -> c.pencils.Count > 0)
-    |> List.map (fun (p, c) -> (p, digitsToRemove p c))
+    List.map lookup allPositions
+    |> List.filter (fun c -> c.pencils.Count > 0)
+    |> List.map (fun c -> (c.pos, digitsToRemove c.pos c))
     |> List.filter (fun (_, ds) -> ds.Count > 0)
     |> List.map (fun (p, ds) -> p, RemoveDigits ds)
 
