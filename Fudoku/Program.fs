@@ -230,29 +230,15 @@ let singlePencilRule lookup =
 
 let updatePencilsRule lookup =
     let solveGroup group =
-        let digits = cellDigits group lookup
-
-        let hasDigits c =
-            (Set.intersect c.pencils digits).Count > 0
+        let groupDigits = cellDigits group lookup
 
         group
         |> List.map lookup
-        |> List.filter hasDigits
-        |> List.map (fun c -> c.pos, RemoveDigits digits)
+        |> List.map (fun c -> c, Set.intersect c.pencils groupDigits)
+        |> List.filter (fun (_, ds) -> ds.Count > 0)
+        |> List.map (fun (c, ds) -> c.pos, RemoveDigits ds)
 
     allGroups |> List.collect solveGroup
-
-let slowUpdatePencilsRule lookup =
-    let digitsToRemove p c =
-        cellDigits (allNeighborsM p) lookup
-        |> Set.intersect c.pencils
-
-    List.map lookup allPositions
-    |> List.filter (fun c -> c.pencils.Count > 0)
-    |> List.map (fun c -> (c.pos, digitsToRemove c.pos c))
-    |> List.filter (fun (_, ds) -> ds.Count > 0)
-    |> List.map (fun (p, ds) -> p, RemoveDigits ds)
-
 
 // Define a function to construct a message to print
 let from whom = sprintf "from %s" whom
