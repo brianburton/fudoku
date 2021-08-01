@@ -254,17 +254,24 @@ let stringToPuzzle source =
     |> List.map createCell
     |> Map.ofList
 
+let solvePuzzle puzzle =
+    let applyAllRulesToPuzzle pz = applyRules (cellFinder pz) AllRules
+
+    let mutable puzzle2 = puzzle
+    let mutable results = applyRules (cellFinder puzzle2) AllRules
+
+    while results.Length > 0 do
+        puzzle2 <- applyRuleResults results puzzle2
+        results <- puzzle2 |> applyAllRulesToPuzzle
+
+    puzzle2
+
 [<EntryPoint>]
 let main _ =
     let source =
         "5..86279.  .........  ...9.3.48 ......5..  1.97.52.4 ..7......  91.5.6...  .........  .86419..7"
 
     let pz = stringToPuzzle source
-    let mutable pz2 = pz
-    let mutable results = applyRules (cellFinder pz2) AllRules
-
-    while results.Length > 0 do
-        pz2 <- applyRuleResults results pz2
-        results <- applyRules (cellFinder pz2) AllRules
+    let solved = solvePuzzle pz
 
     0 // return an integer exit code
