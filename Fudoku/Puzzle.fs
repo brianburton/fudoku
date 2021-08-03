@@ -18,11 +18,11 @@ type Rule = CellFinder -> RuleResult
 type SolutionStep = { rule: string; puzzle: Puzzle }
 
 let emptyPuzzle : Puzzle =
-    allPositions
+    AllPositions
     |> List.map (fun p -> p, starterCell p)
     |> Map.ofList
 
-let isCompleteSolution (s: PuzzleSolution) = s.Count = allPositions.Length
+let isCompleteSolution (s: PuzzleSolution) = s.Count = AllPositions.Length
 
 let cellFinder pz = fun p -> Map.find p pz
 
@@ -62,7 +62,7 @@ let applyRules lookup rules =
 
 let singlePencilRule lookup =
     let changes =
-        allPositions
+        AllPositions
         |> List.map lookup
         |> List.map (fun c -> (c, cellPencils c))
         |> List.filter (fun (_, ds) -> ds.Count = 1)
@@ -77,7 +77,7 @@ let updatePencilsRule lookup =
 
         let digitsInGroup =
             cellsInGroup
-            |> List.map cellDigits
+            |> List.map cellDigit
             |> List.fold Set.union Set.empty
 
         let pencilsToRemoveFromCell c =
@@ -88,13 +88,13 @@ let updatePencilsRule lookup =
         |> List.filter (fun (_, ds) -> ds.Count > 0)
         |> List.map (fun (c, ds) -> c.position, RemovePencils ds)
 
-    let changes = allGroups |> List.collect solveGroup
+    let changes = AllGroups |> List.collect solveGroup
 
     { rule = "fix-pencils"
       changes = changes }
 
 let mapDigitsToGroup group =
-    let map = List.zip allDigits group |> Map.ofList
+    let map = List.zip AllDigits group |> Map.ofList
     (fun digit -> Map.find digit map)
 
 let hiddenPencilsRule (group: Position list) (combo: DigitCombination) (lookup: CellFinder) =
@@ -110,8 +110,8 @@ let hiddenPencilsRule (group: Position list) (combo: DigitCombination) (lookup: 
         |> List.map mapper
         |> List.map lookup
 
-    let insideDigits = cellGroupPencils insideCells
-    let outsideDigits = cellGroupPencils outsideCells
+    let insideDigits = groupPencils insideCells
+    let outsideDigits = groupPencils outsideCells
     let uniqueDigits = insideDigits - outsideDigits
 
     let changes =
@@ -126,7 +126,7 @@ let hiddenPencilsRule (group: Position list) (combo: DigitCombination) (lookup: 
       changes = changes }
 
 let allHiddenPencilRules =
-    List.allPairs allGroups AllDigitCombinations
+    List.allPairs AllGroups AllDigitCombinations
     |> List.map (fun (group, combo) -> hiddenPencilsRule group combo)
 
 let nakedPencilsRule (group: Position list) (combo: DigitCombination) (lookup: CellFinder) =
@@ -142,8 +142,8 @@ let nakedPencilsRule (group: Position list) (combo: DigitCombination) (lookup: C
         |> List.map mapper
         |> List.map lookup
 
-    let insideDigits = cellGroupPencils insideCells
-    let outsideDigits = cellGroupPencils outsideCells
+    let insideDigits = groupPencils insideCells
+    let outsideDigits = groupPencils outsideCells
     let commonDigits = Set.intersect insideDigits outsideDigits
 
     let changes =
@@ -159,7 +159,7 @@ let nakedPencilsRule (group: Position list) (combo: DigitCombination) (lookup: C
       changes = changes }
 
 let allNakedPencilRules =
-    List.allPairs allGroups AllDigitCombinations
+    List.allPairs AllGroups AllDigitCombinations
     |> List.map (fun (group, combo) -> nakedPencilsRule group combo)
 
 let AllRules =

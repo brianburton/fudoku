@@ -38,7 +38,7 @@ type PositionCombination =
     { inside: Position list
       outside: Position list }
 
-let allDigits =
+let AllDigits =
     [ One
       Two
       Three
@@ -49,14 +49,14 @@ let allDigits =
       Eight
       Nine ]
 
-let allDigitsSet = allDigits |> Set.ofList
+let AllDigitsSet = AllDigits |> Set.ofList
 
 let private createDigitCombos len =
     let comboOf digits : DigitCombination =
-        let others = allDigits |> List.except digits
+        let others = AllDigits |> List.except digits
         { inside = digits; outside = others }
 
-    combinations len allDigits |> List.map comboOf
+    combinations len AllDigits |> List.map comboOf
 
 let DigitSingles = createDigitCombos 1
 let DigitPairs = createDigitCombos 2
@@ -81,19 +81,19 @@ let segment d =
     | Eight -> SegThree
     | Nine -> SegThree
 
-let segDigits s =
+let segmentDigits s =
     match s with
     | SegOne -> [ One; Two; Three ]
     | SegTwo -> [ Four; Five; Six ]
     | SegThree -> [ Seven; Eight; Nine ]
 
-let pos r c = { row = r; col = c }
+let position r c = { row = r; col = c }
 
-let multiPos rows cols =
+let positions rows cols =
     List.allPairs rows cols
-    |> List.map (fun (r, c) -> pos r c)
+    |> List.map (fun (r, c) -> position r c)
 
-let allPositions = multiPos allDigits allDigits
+let AllPositions = positions AllDigits AllDigits
 
 let combinationMapper (mapping: Digit -> Position) (combo: DigitCombination) : PositionCombination =
     let posInside = combo.inside |> List.map mapping
@@ -102,7 +102,7 @@ let combinationMapper (mapping: Digit -> Position) (combo: DigitCombination) : P
     { inside = posInside
       outside = posOutside }
 
-let boxrc r c =
+let boxContaining r c =
     match (segment r, segment c) with
     | SegOne, SegOne -> One
     | SegOne, SegTwo -> Two
@@ -114,16 +114,17 @@ let boxrc r c =
     | SegThree, SegTwo -> Eight
     | SegThree, SegThree -> Nine
 
-let row r = multiPos [ r ] allDigits
+let row r = positions [ r ] AllDigits
 
-let allRows = allDigits |> List.map row
+let AllRows = AllDigits |> List.map row
 
-let col c = multiPos allDigits [ c ]
+let col c = positions AllDigits [ c ]
 
-let allCols = allDigits |> List.map col
+let AllCols = AllDigits |> List.map col
 
 let box d =
-    let boxPositions s1 s2 = multiPos (segDigits s1) (segDigits s2)
+    let boxPositions s1 s2 =
+        positions (segmentDigits s1) (segmentDigits s2)
 
     match d with
     | One -> boxPositions SegOne SegOne
@@ -136,14 +137,12 @@ let box d =
     | Eight -> boxPositions SegThree SegTwo
     | Nine -> boxPositions SegThree SegThree
 
-let boxp p = boxrc p.row p.col
+let AllBoxes = AllDigits |> List.map box
 
-let allBoxes = allDigits |> List.map box
-
-let allGroups =
-    List.concat [ allRows
-                  allCols
-                  allBoxes ]
+let AllGroups =
+    List.concat [ AllRows
+                  AllCols
+                  AllBoxes ]
 
 let rowNeighbors p =
     List.filter (fun pp -> pp.col <> p.col) (row p.row)
@@ -151,8 +150,8 @@ let rowNeighbors p =
 let colNeighbors p =
     List.filter (fun pp -> pp.row <> p.row) (col p.col)
 
-let boxNeighbors (p: Position) : Position list =
-    let b = boxp p
+let boxNeighbors p =
+    let b = boxContaining p.row p.col
     List.filter (fun (pp: Position) -> pp <> p) (box b)
 
 let allNeighbors p =
@@ -165,14 +164,14 @@ let solvedCell p d = { position = p; value = Answer d }
 
 let unsolvedCell p ds = { position = p; value = Pencils ds }
 
-let starterCell p = unsolvedCell p allDigitsSet
+let starterCell p = unsolvedCell p AllDigitsSet
 
 let cellPencils c =
     match c.value with
     | Pencils ds -> ds
     | Answer _ -> Set.empty
 
-let cellDigits c =
+let cellDigit c =
     match c.value with
     | Pencils _ -> Set.empty
     | Answer d -> Set.singleton d
@@ -182,7 +181,7 @@ let cellContainsPencils c ds =
     let common = Set.intersect ds pencils
     (Set.count common) > 0
 
-let cellGroupPencils group =
+let groupPencils group =
     group
     |> List.map cellPencils
     |> List.fold Set.union Set.empty

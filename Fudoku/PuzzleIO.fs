@@ -28,6 +28,6 @@ let stringToPuzzle source =
     let digits =
         filtered |> Seq.map charToDigit |> Seq.toList
 
-    List.zip allPositions digits
+    List.zip AllPositions digits
     |> List.map createCell
     |> Map.ofList
