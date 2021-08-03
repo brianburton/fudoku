@@ -12,6 +12,23 @@ let memoize fn =
             cache.Add(x, v)
             v)
 
+let rec combinations len list =
+    let length1 () = list |> List.map (fun x -> [ x ])
+
+    let single () = [ list ]
+
+    let merge item lst = lst |> List.map (fun x -> item :: x)
+
+    let normal head tail =
+        let tails = combinations len tail
+        let suffixes = combinations (len - 1) tail
+        let merges = merge head suffixes
+        List.append merges tails
+
+    if len = 1 then length1 ()
+    elif len = list.Length then single ()
+    else normal list.Head list.Tail
+
 type Digit =
     | One
     | Two
@@ -36,6 +53,28 @@ let allDigits =
 
 let allDigitsSet = allDigits |> Set.ofList
 
+type DigitCombination =
+    { inside: Digit list
+      outside: Digit list }
+
+let createDigitCombos len =
+    let comboOf digits =
+        let others = allDigits |> List.except digits
+        { inside = digits; outside = others }
+
+    combinations len allDigits |> List.map comboOf
+
+let DigitSingles = createDigitCombos 1
+let DigitPairs = createDigitCombos 2
+let DigitTriples = createDigitCombos 3
+let DigitQuads = createDigitCombos 4
+
+let AllDigitCombinations =
+    DigitSingles
+    |> List.append DigitPairs
+    |> List.append DigitTriples
+    |> List.append DigitQuads
+
 type Segment =
     | SegOne
     | SegTwo
@@ -59,7 +98,11 @@ let segDigits s =
     | SegTwo -> [ Four; Five; Six ]
     | SegThree -> [ Seven; Eight; Nine ]
 
-type Pos = { row: Digit; col: Digit }
+type Position = { row: Digit; col: Digit }
+
+type PositionCombination =
+    { inside: Position list
+      outside: Position list }
 
 let pos r c = { row = r; col = c }
 
@@ -68,6 +111,13 @@ let multiPos rows cols =
     |> List.map (fun (r, c) -> pos r c)
 
 let allPositions = multiPos allDigits allDigits
+
+let combinationMapper (mapping: Digit -> Position) (combo: DigitCombination) : PositionCombination =
+    let posInside = combo.inside |> List.map mapping
+    let posOutside = combo.outside |> List.map mapping
+
+    { inside = posInside
+      outside = posOutside }
 
 let boxrc r c =
     match (segment r, segment c) with
@@ -118,9 +168,9 @@ let rowNeighbors p =
 let colNeighbors p =
     List.filter (fun pp -> pp.row <> p.row) (col p.col)
 
-let boxNeighbors (p: Pos) : Pos list =
+let boxNeighbors (p: Position) : Position list =
     let b = boxp p
-    List.filter (fun (pp: Pos) -> pp <> p) (box b)
+    List.filter (fun (pp: Position) -> pp <> p) (box b)
 
 let allNeighbors p =
     let r = rowNeighbors p
@@ -132,10 +182,12 @@ type CellValue =
     | Answer of Digit
     | Pencils of Set<Digit>
 
-type Cell = { position: Pos; value: CellValue }
+type Cell =
+    { position: Position
+      value: CellValue }
 
-type PuzzleSolution = Map<Pos, Digit>
-type Puzzle = Map<Pos, Cell>
+type PuzzleSolution = Map<Position, Digit>
+type Puzzle = Map<Position, Cell>
 
 let solvedCell p d = { position = p; value = Answer d }
 
@@ -160,29 +212,39 @@ let emptyPuzzle : Puzzle =
 
 let isCompleteSolution (s: PuzzleSolution) = s.Count = allPositions.Length
 
-type CellFinder = Pos -> Cell
+type CellFinder = Position -> Cell
 
 let cellFinder pz = fun p -> Map.find p pz
 
-type RuleResult =
+type RuleResultChange =
     | Solved of Digit
     | RemovePencils of Set<Digit>
+    | RetainPencils of Set<Digit>
 
-type Rule = CellFinder -> Pos * RuleResult list
+type RuleResult =
+    { rule: string
+      changes: (Position * RuleResultChange) list }
+
+type Rule = CellFinder -> RuleResult
 
 let applyRuleResults results puzzle =
     let solve p d pz = pz |> Map.add p (solvedCell p d)
 
-    let remove p ds pz =
+    let pencils p ds pz op =
         let currentPencils = cellPencils (Map.find p pz)
-        let changedPencils = currentPencils - ds
+        let changedPencils = ds |> op currentPencils
         let changedCell = unsolvedCell p changedPencils
         Map.add p changedCell pz
+
+    let remove p ds pz = pencils p ds pz Set.difference
+
+    let retain p ds pz = pencils p ds pz Set.intersect
 
     let applyResult pz (p, result) =
         match result with
         | Solved d -> solve p d pz
         | RemovePencils ds -> remove p ds pz
+        | RetainPencils ds -> retain p ds pz
 
     let applied = results |> List.fold applyResult puzzle
 
@@ -190,19 +252,29 @@ let applyRuleResults results puzzle =
 
 let applyRules lookup rules =
     let applyRule prior rule =
-        if List.isEmpty prior then
+        if List.isEmpty prior.changes then
             rule lookup
         else
             prior
 
-    rules |> List.fold applyRule List.empty
+    rules
+    |> List.fold applyRule { rule = ""; changes = List.empty }
+
+let cellGroupPencils group =
+    group
+    |> List.map cellPencils
+    |> List.fold Set.union Set.empty
 
 let singlePencilRule lookup =
-    allPositions
-    |> List.map lookup
-    |> List.map (fun c -> (c, cellPencils c))
-    |> List.filter (fun (_, ds) -> ds.Count = 1)
-    |> List.map (fun (c, ds) -> c.position, Solved ds.MinimumElement)
+    let changes =
+        allPositions
+        |> List.map lookup
+        |> List.map (fun c -> (c, cellPencils c))
+        |> List.filter (fun (_, ds) -> ds.Count = 1)
+        |> List.map (fun (c, ds) -> c.position, Solved ds.MinimumElement)
+
+    { rule = "single-pencil"
+      changes = changes }
 
 let updatePencilsRule lookup =
     let solveGroup group =
@@ -221,9 +293,51 @@ let updatePencilsRule lookup =
         |> List.filter (fun (_, ds) -> ds.Count > 0)
         |> List.map (fun (c, ds) -> c.position, RemovePencils ds)
 
-    allGroups |> List.collect solveGroup
+    let changes = allGroups |> List.collect solveGroup
 
-let AllRules = [ updatePencilsRule; singlePencilRule ]
+    { rule = "fix-pencils"
+      changes = changes }
+
+let mapDigitsToGroup group =
+    let map = List.zip allDigits group |> Map.ofList
+    (fun digit -> Map.find digit map)
+
+let hiddenPencilsRule (group: Position list) (combo: DigitCombination) (lookup: CellFinder) =
+    let len = combo.inside.Length
+
+    let mapper = mapDigitsToGroup group
+
+    let insideCells =
+        combo.inside |> List.map mapper |> List.map lookup
+
+    let outsideCells =
+        combo.outside
+        |> List.map mapper
+        |> List.map lookup
+
+    let insideDigits = cellGroupPencils insideCells
+    let outsideDigits = cellGroupPencils outsideCells
+    let uniqueDigits = insideDigits - outsideDigits
+
+    let changes =
+        if uniqueDigits.Count <> len
+           || uniqueDigits = insideDigits then
+            List.empty
+        else
+            insideCells
+            |> List.map (fun c -> c.position, RetainPencils uniqueDigits)
+
+    { rule = "hidden-pencils"
+      changes = changes }
+
+let allHiddenPencilRules =
+    List.allPairs allGroups AllDigitCombinations
+    |> List.map (fun (group, combo) -> hiddenPencilsRule group combo)
+
+let AllRules =
+    allHiddenPencilRules
+    |> List.append [ updatePencilsRule
+                     singlePencilRule ]
 
 let stringToPuzzle source =
     let charToDigit c =
@@ -254,17 +368,28 @@ let stringToPuzzle source =
     |> List.map createCell
     |> Map.ofList
 
+type SolutionStep = { rule: string; puzzle: Puzzle }
+
 let solvePuzzle puzzle =
     let applyAllRulesToPuzzle pz = applyRules (cellFinder pz) AllRules
+
+    let mutable steps =
+        List.singleton { rule = "start"; puzzle = puzzle }
 
     let mutable puzzle2 = puzzle
     let mutable results = applyRules (cellFinder puzzle2) AllRules
 
-    while results.Length > 0 do
-        puzzle2 <- applyRuleResults results puzzle2
+    while results.changes.Length > 0 do
+        puzzle2 <- applyRuleResults results.changes puzzle2
+
+        let step =
+            { rule = results.rule
+              puzzle = puzzle2 }
+
+        steps <- steps @ [ step ]
         results <- puzzle2 |> applyAllRulesToPuzzle
 
-    puzzle2
+    (puzzle2, steps)
 
 [<EntryPoint>]
 let main _ =
