@@ -205,6 +205,11 @@ let cellDigits c =
     | Pencils _ -> Set.empty
     | Answer d -> Set.singleton d
 
+let cellContainsPencils c ds =
+    let pencils = cellPencils c
+    let common = Set.intersect ds pencils
+    (Set.count common) > 0
+
 let emptyPuzzle : Puzzle =
     allPositions
     |> List.map (fun p -> p, starterCell p)
@@ -327,17 +332,50 @@ let hiddenPencilsRule (group: Position list) (combo: DigitCombination) (lookup: 
             insideCells
             |> List.map (fun c -> c.position, RetainPencils uniqueDigits)
 
-    { rule = "hidden-pencils"
+    { rule = $"hidden-pencils-%d{len}"
       changes = changes }
 
 let allHiddenPencilRules =
     List.allPairs allGroups AllDigitCombinations
     |> List.map (fun (group, combo) -> hiddenPencilsRule group combo)
 
+let nakedPencilsRule (group: Position list) (combo: DigitCombination) (lookup: CellFinder) =
+    let len = combo.inside.Length
+
+    let mapper = mapDigitsToGroup group
+
+    let insideCells =
+        combo.inside |> List.map mapper |> List.map lookup
+
+    let outsideCells =
+        combo.outside
+        |> List.map mapper
+        |> List.map lookup
+
+    let insideDigits = cellGroupPencils insideCells
+    let outsideDigits = cellGroupPencils outsideCells
+    let commonDigits = Set.intersect insideDigits outsideDigits
+
+    let changes =
+        if insideDigits.Count <> len
+           || commonDigits.Count = 0 then
+            List.empty
+        else
+            outsideCells
+            |> List.filter (fun c -> cellContainsPencils c commonDigits)
+            |> List.map (fun c -> c.position, RemovePencils commonDigits)
+
+    { rule = $"naked-pencils-%d{len}"
+      changes = changes }
+
+let allNakedPencilRules =
+    List.allPairs allGroups AllDigitCombinations
+    |> List.map (fun (group, combo) -> nakedPencilsRule group combo)
+
 let AllRules =
-    allHiddenPencilRules
-    |> List.append [ updatePencilsRule
-                     singlePencilRule ]
+    [ updatePencilsRule ]
+    @ [ singlePencilRule ]
+    @ allNakedPencilRules @ allHiddenPencilRules
 
 let stringToPuzzle source =
     let charToDigit c =
