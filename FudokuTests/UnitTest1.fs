@@ -1,8 +1,11 @@
-module FudokuTests
+module Fudoku.Tests
 
 open NUnit.Framework
-open Fudoku.Domain
-open Fudoku.Puzzle
+open Domain
+open Puzzle
+
+let unsolvedCell r c ds =
+    unsolvedCell (position r c) (Set.ofList ds)
 
 [<SetUp>]
 let Setup () = ()
@@ -15,13 +18,12 @@ let singlePencilTests () =
     let before =
         addToPuzzle
             emptyPuzzle
-            [ (unsolvedCell p11 (Set.singleton Two))
-              (unsolvedCell p19 (Set.singleton Eight)) ]
+            [ (unsolvedCell One One [ Two ])
+              (unsolvedCell One Nine [ Eight ]) ]
 
     let expected = [ p11, Solved Two; p19, Solved Eight ]
 
-    let actual =
-        Fudoku.SingleDigit.rule (cellFinder before)
+    let actual = SingleDigit.rule (cellFinder before)
 
     Assert.AreEqual(expected, actual.changes)
     Assert.Pass()
