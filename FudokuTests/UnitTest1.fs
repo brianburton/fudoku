@@ -57,7 +57,7 @@ let hiddenPairTest () =
     let retained = RetainPencils (Set.ofList [Three;Nine])
     let expected = [ (position One One),retained ; (position One Two),retained ]
 
-    let actual = hiddenPencilsRule group combo (cellFinder before)
+    let actual = Tuple.hiddenPencils group combo (cellFinder before)
     Assert.AreEqual(expected, actual.changes)
 
     Assert.Pass()

@@ -6,8 +6,8 @@ type SolutionStep = { rule: string; puzzle: Puzzle }
 
 let AllRules =
     [ updatePencilsRule ]
-    @ [ Fudoku.SingleDigit.rule ]
-      @ allNakedPencilRules @ allHiddenPencilRules
+    @ [ SingleDigit.rule ]
+      @ Tuple.nakedRules @ Tuple.hiddenRules
 
 let solvePuzzle puzzle =
     let applyAllRulesToPuzzle pz = applyRules (cellFinder pz) AllRules
