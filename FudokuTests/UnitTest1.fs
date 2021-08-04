@@ -27,3 +27,37 @@ let singlePencilTests () =
 
     Assert.AreEqual(expected, actual.changes)
     Assert.Pass()
+
+[<Test>]
+let hiddenPairTest () =
+    let group = row (One)
+
+    let combo : DigitCombination =
+        { inside = [ One; Two ]
+          outside =
+              [ Three
+                Four
+                Five
+                Six
+                Seven
+                Eight
+                Nine ] }
+
+    let before =
+        addToPuzzle
+            emptyPuzzle
+            [ (unsolvedCell One Three [ One;Two;Four;Five; Six; Seven;Eight ])
+              (unsolvedCell One Four [ One;Two;Four;Five; Six; Seven;Eight ])
+              (unsolvedCell One Five [ One;Two;Four;Five; Six; Seven;Eight ])
+              (unsolvedCell One Six [ One;Two;Four;Five; Six; Seven;Eight ])
+              (unsolvedCell One Seven [ One;Two;Four;Five; Six; Seven;Eight ])
+              (unsolvedCell One Eight [ One;Two;Four;Five; Six; Seven;Eight ])
+              (unsolvedCell One Nine [ One;Two;Four;Five; Six; Seven;Eight ]) ]
+
+    let retained = RetainPencils (Set.ofList [Three;Nine])
+    let expected = [ (position One One),retained ; (position One Two),retained ]
+
+    let actual = hiddenPencilsRule group combo (cellFinder before)
+    Assert.AreEqual(expected, actual.changes)
+
+    Assert.Pass()

@@ -21,11 +21,10 @@ let emptyPuzzle : Puzzle =
     |> List.map (fun p -> p, starterCell p)
     |> Map.ofList
 
-let addToPuzzle (pz:Puzzle) (cells:Cell list) :Puzzle =
+let addToPuzzle (pz: Puzzle) (cells: Cell list) : Puzzle =
     let addCell puzzle cell = Map.add cell.position cell puzzle
 
-    cells
-    |> List.fold addCell pz
+    cells |> List.fold addCell pz
 
 let isCompleteSolution (s: PuzzleSolution) = s.Count = AllPositions.Length
 
@@ -91,6 +90,16 @@ let mapDigitsToGroup group =
     let map = List.zip AllDigits group |> Map.ofList
     (fun digit -> Map.find digit map)
 
+let atLeastTwoDigitsInAll (cells: Cell list) (digits: Set<Digit>) =
+    let atLeastTwoInCommon cell =
+        let cellDigits = cellPencils cell
+        let common = Set.intersect digits cellDigits
+        common.Count >= 2
+
+    cells
+    |> List.map atLeastTwoInCommon
+    |> List.fold (fun a b -> a && b) true
+
 let hiddenPencilsRule (group: Position list) (combo: DigitCombination) (lookup: CellFinder) =
     let len = combo.inside.Length
 
@@ -109,12 +118,13 @@ let hiddenPencilsRule (group: Position list) (combo: DigitCombination) (lookup: 
     let uniqueDigits = insideDigits - outsideDigits
 
     let changes =
-        if uniqueDigits.Count <> len
-           || uniqueDigits = insideDigits then
-            List.empty
-        else
+        if uniqueDigits.Count = len
+           && uniqueDigits <> insideDigits
+           && atLeastTwoDigitsInAll insideCells uniqueDigits then
             insideCells
             |> List.map (fun c -> c.position, RetainPencils uniqueDigits)
+        else
+            List.empty
 
     { rule = $"hidden-pencils-%d{len}"
       changes = changes }
@@ -141,13 +151,14 @@ let nakedPencilsRule (group: Position list) (combo: DigitCombination) (lookup: C
     let commonDigits = Set.intersect insideDigits outsideDigits
 
     let changes =
-        if insideDigits.Count <> len
-           || commonDigits.Count = 0 then
-            List.empty
-        else
+        if insideDigits.Count = len
+           && commonDigits.Count > 0
+           && atLeastTwoDigitsInAll insideCells insideDigits then
             outsideCells
             |> List.filter (fun c -> cellContainsPencils c commonDigits)
             |> List.map (fun c -> c.position, RemovePencils commonDigits)
+        else
+            List.empty
 
     { rule = $"naked-pencils-%d{len}"
       changes = changes }
@@ -155,4 +166,3 @@ let nakedPencilsRule (group: Position list) (combo: DigitCombination) (lookup: C
 let allNakedPencilRules =
     List.allPairs AllGroups AllDigitCombinations
     |> List.map (fun (group, combo) -> nakedPencilsRule group combo)
-
