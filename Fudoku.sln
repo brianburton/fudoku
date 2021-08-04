@@ -2,6 +2,8 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Fudoku", "Fudoku\Fudoku.fsproj", "{950ED454-EA12-46CD-B409-3491BAA06401}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FudokuTests", "FudokuTests\FudokuTests.fsproj", "{6B491A3E-7DFD-45EA-B857-A33F806A8318}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +14,9 @@ Global
 		{950ED454-EA12-46CD-B409-3491BAA06401}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{950ED454-EA12-46CD-B409-3491BAA06401}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{950ED454-EA12-46CD-B409-3491BAA06401}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6B491A3E-7DFD-45EA-B857-A33F806A8318}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6B491A3E-7DFD-45EA-B857-A33F806A8318}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6B491A3E-7DFD-45EA-B857-A33F806A8318}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6B491A3E-7DFD-45EA-B857-A33F806A8318}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

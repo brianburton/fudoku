@@ -4,6 +4,7 @@ open Fudoku.Domain
 
 type PuzzleSolution = Map<Position, Digit>
 type Puzzle = Map<Position, Cell>
+
 type RuleResultChange =
     | Solved of Digit
     | RemovePencils of Set<Digit>
@@ -15,12 +16,16 @@ type RuleResult =
 
 type Rule = CellFinder -> RuleResult
 
-type SolutionStep = { rule: string; puzzle: Puzzle }
-
 let emptyPuzzle : Puzzle =
     AllPositions
     |> List.map (fun p -> p, starterCell p)
     |> Map.ofList
+
+let addToPuzzle (pz:Puzzle) (cells:Cell list) :Puzzle =
+    let addCell puzzle cell = Map.add cell.position cell puzzle
+
+    cells
+    |> List.fold addCell pz
 
 let isCompleteSolution (s: PuzzleSolution) = s.Count = AllPositions.Length
 
@@ -59,17 +64,6 @@ let applyRules lookup rules =
     rules
     |> List.fold applyRule { rule = ""; changes = List.empty }
 
-
-let singlePencilRule lookup =
-    let changes =
-        AllPositions
-        |> List.map lookup
-        |> List.map (fun c -> (c, cellPencils c))
-        |> List.filter (fun (_, ds) -> ds.Count = 1)
-        |> List.map (fun (c, ds) -> c.position, Solved ds.MinimumElement)
-
-    { rule = "single-pencil"
-      changes = changes }
 
 let updatePencilsRule lookup =
     let solveGroup group =
@@ -162,28 +156,3 @@ let allNakedPencilRules =
     List.allPairs AllGroups AllDigitCombinations
     |> List.map (fun (group, combo) -> nakedPencilsRule group combo)
 
-let AllRules =
-    [ updatePencilsRule ]
-    @ [ singlePencilRule ]
-    @ allNakedPencilRules @ allHiddenPencilRules
-
-let solvePuzzle puzzle =
-    let applyAllRulesToPuzzle pz = applyRules (cellFinder pz) AllRules
-
-    let mutable steps =
-        List.singleton { rule = "start"; puzzle = puzzle }
-
-    let mutable puzzle2 = puzzle
-    let mutable results = applyRules (cellFinder puzzle2) AllRules
-
-    while results.changes.Length > 0 do
-        puzzle2 <- applyRuleResults results.changes puzzle2
-
-        let step =
-            { rule = results.rule
-              puzzle = puzzle2 }
-
-        steps <- steps @ [ step ]
-        results <- puzzle2 |> applyAllRulesToPuzzle
-
-    (puzzle2, steps)

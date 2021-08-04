@@ -9,6 +9,8 @@
         <Compile Include="Utils.fs" />
         <Compile Include="Domain.fs" />
         <Compile Include="Puzzle.fs" />
+        <Compile Include="Rules.fs" />
+        <Compile Include="Solver.fs" />
         <Compile Include="PuzzleIO.fs" />
         <Compile Include="Program.fs" />
     </ItemGroup>
