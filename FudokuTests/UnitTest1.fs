@@ -62,6 +62,16 @@ let hiddenPairTest () =
 
 [<Test>]
 let cellsLinkedByDigitsTest () =
+    Assert.AreEqual(true, Tuple.cellsLinkedByDigits [ (unsolvedCell Four Five [ One; Two ]) ] (Set.ofList [ One ]))
+
+    Assert.AreEqual(
+        true,
+        Tuple.cellsLinkedByDigits
+            [ (unsolvedCell Four Five [ One; Two ])
+              (unsolvedCell Four Six [ One; Two ]) ]
+            (Set.ofList [ One; Two ])
+    )
+
     Assert.AreEqual(
         true, // 7-> 5 -> 6 -> 7
         Tuple.cellsLinkedByDigits

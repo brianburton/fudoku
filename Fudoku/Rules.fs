@@ -19,30 +19,34 @@ module SingleDigit =
 
 module Tuple =
 
-    let cellsLinkedByDigits (cells:Cell list) (digits:Set<Digit>): bool =
+    let cellsLinkedByDigits (cells: Cell list) (digits: Set<Digit>) : bool =
         let cellsWithPencil digit cells =
             cells
             |> List.filter (fun c -> Set.contains digit (cellPencils c))
-            |> List.map (fun  c -> digit,c)
+            |> List.map (fun c -> digit, c)
 
-        let rec next (remainingCells:Cell list) (remainingDigits:Set<Digit>) (current:Cell) =
+        let rec next (remainingCells: Cell list) (remainingDigits: Set<Digit>) (current: Cell) =
             let impl digit cell =
-                let newRemainingCells = List.except [cell] remainingCells
+                let newRemainingCells = List.except [ cell ] remainingCells
                 let newRemainingDigits = Set.remove digit remainingDigits
                 next newRemainingCells newRemainingDigits cell
 
-            if remainingCells.IsEmpty && remainingDigits.IsEmpty then true
-            elif remainingCells.IsEmpty || remainingDigits.IsEmpty then false
+            if remainingCells.IsEmpty && remainingDigits.IsEmpty then
+                true
+            elif remainingCells.IsEmpty || remainingDigits.IsEmpty then
+                false
             else
                 let currentDigits = (cellPencils current)
-                let availableDigits = Set.intersect currentDigits remainingDigits
+
+                let availableDigits =
+                    Set.intersect currentDigits remainingDigits
+
                 availableDigits
                 |> Set.toList
                 |> List.collect (fun d -> (cellsWithPencil d remainingCells))
-                |> List.exists (fun (d,c)-> impl d c)
+                |> List.exists (fun (d, c) -> impl d c)
 
-        cells
-        |> List.exists (next cells digits)
+        cells |> List.exists (next cells digits)
 
     let private summarize (group: Position list) (combo: DigitCombination) (lookup: CellFinder) =
         let len = combo.inside.Length
