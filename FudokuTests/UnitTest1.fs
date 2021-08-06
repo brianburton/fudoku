@@ -59,3 +59,53 @@ let hiddenPairTest () =
         Tuple.hiddenPencils group combo (cellFinder before)
 
     Assert.AreEqual(expected, actual.changes)
+
+[<Test>]
+let cellsLinkedByDigitsTest () =
+    Assert.AreEqual(
+        true, // 7-> 5 -> 6 -> 7
+        Tuple.cellsLinkedByDigits
+            [ (unsolvedCell Four Five [ One; Two ])
+              (unsolvedCell Four Six [ Two; Three ])
+              (unsolvedCell Four Seven [ One; Three ]) ]
+            (Set.ofList [ One; Two; Three ])
+    )
+
+    Assert.AreEqual(
+        true, // 8 -> 5 -> 6 -> 7 -> 8
+        Tuple.cellsLinkedByDigits
+            [ (unsolvedCell Four Five [ One; Two; Nine ])
+              (unsolvedCell Four Six [ Two; Three; Eight ])
+              (unsolvedCell Four Seven [ Three; Four; Seven ])
+              (unsolvedCell Four Eight [ One; Four; Three ]) ]
+            (Set.ofList [ One; Two; Three; Four ])
+    )
+
+    Assert.AreEqual(
+        true, // 7 -> 8 -> 5 -> 6
+        Tuple.cellsLinkedByDigits
+            [ (unsolvedCell Four Five [ One; Two; Nine ])
+              (unsolvedCell Four Six [ One; Two; Eight ])
+              (unsolvedCell Four Seven [ Three; Four; Seven ])
+              (unsolvedCell Four Eight [ One; Four; Three ]) ]
+            (Set.ofList [ One; Two; Three; Four ])
+    )
+
+    Assert.AreEqual(
+        true,
+        Tuple.cellsLinkedByDigits
+            [ (unsolvedCell Four Five [ One; Two ])
+              (unsolvedCell Four Six [ One; Two ])
+              (unsolvedCell Four Seven [ Two; Three ]) ]
+            (Set.ofList [ One; Two; Three ])
+    )
+
+    Assert.AreEqual(
+        false,
+        Tuple.cellsLinkedByDigits
+            [ (unsolvedCell Four Five [ One; Two ])
+              (unsolvedCell Four Six [ One; Two ])
+              (unsolvedCell Four Seven [ Three; Four ])
+              (unsolvedCell Four Eight [ Three; Four ]) ]
+            (Set.ofList [ One; Two; Three; Four ])
+    )

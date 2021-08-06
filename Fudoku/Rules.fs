@@ -19,6 +19,31 @@ module SingleDigit =
 
 module Tuple =
 
+    let cellsLinkedByDigits (cells:Cell list) (digits:Set<Digit>): bool =
+        let cellsWithPencil digit cells =
+            cells
+            |> List.filter (fun c -> Set.contains digit (cellPencils c))
+            |> List.map (fun  c -> digit,c)
+
+        let rec next (remainingCells:Cell list) (remainingDigits:Set<Digit>) (current:Cell) =
+            let impl digit cell =
+                let newRemainingCells = List.except [cell] remainingCells
+                let newRemainingDigits = Set.remove digit remainingDigits
+                next newRemainingCells newRemainingDigits cell
+
+            if remainingCells.IsEmpty && remainingDigits.IsEmpty then true
+            elif remainingCells.IsEmpty || remainingDigits.IsEmpty then false
+            else
+                let currentDigits = (cellPencils current)
+                let availableDigits = Set.intersect currentDigits remainingDigits
+                availableDigits
+                |> Set.toList
+                |> List.collect (fun d -> (cellsWithPencil d remainingCells))
+                |> List.exists (fun (d,c)-> impl d c)
+
+        cells
+        |> List.exists (next cells digits)
+
     let private summarize (group: Position list) (combo: DigitCombination) (lookup: CellFinder) =
         let len = combo.inside.Length
 
@@ -36,16 +61,6 @@ module Tuple =
 
         (len, insideCells, outsideCells)
 
-    let private atLeastTwoDigitsInAll (cells: Cell list) (digits: Set<Digit>) =
-        let atLeastTwoInCommon cell =
-            let cellDigits = cellPencils cell
-            let common = Set.intersect digits cellDigits
-            common.Count >= 2
-
-        cells
-        |> List.map atLeastTwoInCommon
-        |> List.fold (fun a b -> a && b) true
-
     let hiddenPencils (group: Position list) (combo: DigitCombination) (lookup: CellFinder) =
         let len, insideCells, outsideCells = summarize group combo lookup
 
@@ -56,7 +71,7 @@ module Tuple =
         let changes =
             if uniqueDigits.Count = len
                && uniqueDigits <> insideDigits
-               && atLeastTwoDigitsInAll insideCells uniqueDigits then
+               && cellsLinkedByDigits insideCells uniqueDigits then
                 insideCells
                 |> List.map (fun c -> c.position, RetainPencils uniqueDigits)
             else
@@ -75,7 +90,7 @@ module Tuple =
         let changes =
             if insideDigits.Count = len
                && commonDigits.Count > 0
-               && atLeastTwoDigitsInAll insideCells insideDigits then
+               && cellsLinkedByDigits insideCells insideDigits then
                 outsideCells
                 |> List.filter (fun c -> cellContainsPencils c commonDigits)
                 |> List.map (fun c -> c.position, RemovePencils commonDigits)
