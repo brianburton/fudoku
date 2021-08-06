@@ -13,7 +13,7 @@ let addCell cell map = Map.add cell.position cell map
 let Setup () = ()
 
 [<Test>]
-let singlePencilTests () =
+let singleDigitTests () =
     let p11 = position One One
     let p19 = position One Nine
 
@@ -25,6 +25,36 @@ let singlePencilTests () =
     let expected = [ p11, Solved Two; p19, Solved Eight ]
 
     let actual = SingleDigit.rule (cellFinder before)
+
+    Assert.AreEqual(expected, actual.changes)
+
+[<Test>]
+let singleCellPencilTests () =
+    let group = row One
+
+    let combo: DigitCombination =
+        { inside = [ Two ]
+          outside = List.except [ Two ] AllDigits }
+
+    let outsideDigits = List.except [ Nine ] AllDigits
+
+    let before =
+        emptyPuzzle
+        |> addCell (unsolvedCell One One outsideDigits)
+        |> addCell (unsolvedCell One Two [ Nine ])
+        |> addCell (unsolvedCell One Three outsideDigits)
+        |> addCell (unsolvedCell One Four outsideDigits)
+        |> addCell (unsolvedCell One Five outsideDigits)
+        |> addCell (unsolvedCell One Six outsideDigits)
+        |> addCell (unsolvedCell One Seven outsideDigits)
+        |> addCell (unsolvedCell One Eight outsideDigits)
+        |> addCell (unsolvedCell One Nine outsideDigits)
+
+    let expected =
+        [ (position One Two), Solved Nine ]
+
+    let actual =
+        Tuple.singleCellPencil group combo (cellFinder before)
 
     Assert.AreEqual(expected, actual.changes)
 

@@ -65,6 +65,23 @@ module Tuple =
 
         (len, insideCells, outsideCells)
 
+    let singleCellPencil (group: Position list) (combo: DigitCombination) (lookup: CellFinder) =
+        let len, insideCells, outsideCells = summarize group combo lookup
+
+        let insideDigits = groupPencils insideCells
+        let outsideDigits = groupPencils outsideCells
+        let uniqueDigits = insideDigits - outsideDigits
+
+        let changes =
+            if len = 1 && uniqueDigits.Count = len then
+                insideCells
+                |> List.map (fun c -> c.position, Solved uniqueDigits.MinimumElement)
+            else
+                List.empty
+
+        { rule = $"single-cell-pencil"
+          changes = changes }
+
     let hiddenPencils (group: Position list) (combo: DigitCombination) (lookup: CellFinder) =
         let len, insideCells, outsideCells = summarize group combo lookup
 
@@ -104,10 +121,14 @@ module Tuple =
         { rule = $"naked-pencils-%d{len}"
           changes = changes }
 
+    let singleCell =
+        List.allPairs AllGroups DigitSingles
+        |> List.map (fun (group, combo) -> hiddenPencils group combo)
+
     let hiddenRules =
-        List.allPairs AllGroups AllDigitCombinations
+        List.allPairs AllGroups MultiDigitCombinations
         |> List.map (fun (group, combo) -> hiddenPencils group combo)
 
     let nakedRules =
-        List.allPairs AllGroups AllDigitCombinations
+        List.allPairs AllGroups MultiDigitCombinations
         |> List.map (fun (group, combo) -> nakedPencils group combo)

@@ -63,11 +63,7 @@ let DigitPairs = createDigitCombos 2
 let DigitTriples = createDigitCombos 3
 let DigitQuads = createDigitCombos 4
 
-let AllDigitCombinations =
-    DigitSingles
-    |> List.append DigitPairs
-    |> List.append DigitTriples
-    |> List.append DigitQuads
+let MultiDigitCombinations = DigitPairs @ DigitTriples @ DigitQuads
 
 let segment d =
     match d with

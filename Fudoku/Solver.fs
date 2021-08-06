@@ -5,9 +5,9 @@ open Puzzle
 type SolutionStep = { rule: string; puzzle: Puzzle }
 
 let AllRules =
-    [ updatePencilsRule ]
-    @ [ SingleDigit.rule ]
-      @ Tuple.nakedRules @ Tuple.hiddenRules
+    [ updatePencilsRule ; SingleDigit.rule ]
+      @ Tuple.singleCell
+        @ Tuple.nakedRules @ Tuple.hiddenRules
 
 let solvePuzzle puzzle =
     let applyAllRulesToPuzzle pz = applyRules (cellFinder pz) AllRules
