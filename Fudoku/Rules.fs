@@ -121,7 +121,7 @@ module Tuple =
         { rule = $"naked-pencils-%d{len}"
           changes = changes }
 
-    let singleCell =
+    let singleCellRule =
         List.allPairs AllGroups DigitSingles
         |> List.map (fun (group, combo) -> hiddenPencils group combo)
 
