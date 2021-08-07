@@ -1,13 +1,9 @@
-module Fudoku.Tests
+module Fudoku.Tests.Misc
 
 open NUnit.Framework
-open Domain
-open Puzzle
-
-let unsolvedCell r c ds =
-    unsolvedCell (position r c) (Set.ofList ds)
-
-let addCell cell map = Map.add cell.position cell map
+open Fudoku.Tests.Common
+open Fudoku.Domain
+open Fudoku.Puzzle
 
 [<SetUp>]
 let Setup () = ()
@@ -19,12 +15,13 @@ let singleDigitTests () =
 
     let before =
         emptyPuzzle
-        |> addCell (unsolvedCell One One [ Two ])
-        |> addCell (unsolvedCell One Nine [ Eight ])
+        |> addCell (unsolvedCellRC One One [ Two ])
+        |> addCell (unsolvedCellRC One Nine [ Eight ])
 
     let expected = [ p11, Solved Two; p19, Solved Eight ]
 
-    let actual = SingleDigit.rule (cellFinder before)
+    let actual =
+        Fudoku.SingleDigit.rule (cellFinder before)
 
     Assert.AreEqual(expected, actual.changes)
 
@@ -40,21 +37,20 @@ let singleCellPencilTests () =
 
     let before =
         emptyPuzzle
-        |> addCell (unsolvedCell One One outsideDigits)
-        |> addCell (unsolvedCell One Two [ Nine ])
-        |> addCell (unsolvedCell One Three outsideDigits)
-        |> addCell (unsolvedCell One Four outsideDigits)
-        |> addCell (unsolvedCell One Five outsideDigits)
-        |> addCell (unsolvedCell One Six outsideDigits)
-        |> addCell (unsolvedCell One Seven outsideDigits)
-        |> addCell (unsolvedCell One Eight outsideDigits)
-        |> addCell (unsolvedCell One Nine outsideDigits)
+        |> addCell (unsolvedCellRC One One outsideDigits)
+        |> addCell (unsolvedCellRC One Two [ Nine ])
+        |> addCell (unsolvedCellRC One Three outsideDigits)
+        |> addCell (unsolvedCellRC One Four outsideDigits)
+        |> addCell (unsolvedCellRC One Five outsideDigits)
+        |> addCell (unsolvedCellRC One Six outsideDigits)
+        |> addCell (unsolvedCellRC One Seven outsideDigits)
+        |> addCell (unsolvedCellRC One Eight outsideDigits)
+        |> addCell (unsolvedCellRC One Nine outsideDigits)
 
-    let expected =
-        [ (position One Two), Solved Nine ]
+    let expected = [ (position One Two), Solved Nine ]
 
     let actual =
-        Tuple.singleCellPencil group combo (cellFinder before)
+        Fudoku.Tuple.singleCellPencil group combo (cellFinder before)
 
     Assert.AreEqual(expected, actual.changes)
 
@@ -70,13 +66,13 @@ let hiddenPairTest () =
 
     let before =
         emptyPuzzle
-        |> addCell (unsolvedCell One Three outsideDigits)
-        |> addCell (unsolvedCell One Four outsideDigits)
-        |> addCell (unsolvedCell One Five outsideDigits)
-        |> addCell (unsolvedCell One Six outsideDigits)
-        |> addCell (unsolvedCell One Seven outsideDigits)
-        |> addCell (unsolvedCell One Eight outsideDigits)
-        |> addCell (unsolvedCell One Nine outsideDigits)
+        |> addCell (unsolvedCellRC One Three outsideDigits)
+        |> addCell (unsolvedCellRC One Four outsideDigits)
+        |> addCell (unsolvedCellRC One Five outsideDigits)
+        |> addCell (unsolvedCellRC One Six outsideDigits)
+        |> addCell (unsolvedCellRC One Seven outsideDigits)
+        |> addCell (unsolvedCellRC One Eight outsideDigits)
+        |> addCell (unsolvedCellRC One Nine outsideDigits)
 
     let retained =
         RetainPencils(Set.ofList [ Three; Nine ])
@@ -86,66 +82,66 @@ let hiddenPairTest () =
           (position One Two), retained ]
 
     let actual =
-        Tuple.hiddenPencils group combo (cellFinder before)
+        Fudoku.Tuple.hiddenPencils group combo (cellFinder before)
 
     Assert.AreEqual(expected, actual.changes)
 
 [<Test>]
 let cellsLinkedByDigitsTest () =
-    Assert.AreEqual(true, Tuple.cellsLinkedByDigits [ (unsolvedCell Four Five [ One; Two ]) ] (Set.ofList [ One ]))
+    Assert.AreEqual(true, Fudoku.Tuple.cellsLinkedByDigits [ (unsolvedCellRC Four Five [ One; Two ]) ] (Set.ofList [ One ]))
 
     Assert.AreEqual(
         true,
-        Tuple.cellsLinkedByDigits
-            [ (unsolvedCell Four Five [ One; Two ])
-              (unsolvedCell Four Six [ One; Two ]) ]
+        Fudoku.Tuple.cellsLinkedByDigits
+            [ (unsolvedCellRC Four Five [ One; Two ])
+              (unsolvedCellRC Four Six [ One; Two ]) ]
             (Set.ofList [ One; Two ])
     )
 
     Assert.AreEqual(
         true, // 7-> 5 -> 6 -> 7
-        Tuple.cellsLinkedByDigits
-            [ (unsolvedCell Four Five [ One; Two ])
-              (unsolvedCell Four Six [ Two; Three ])
-              (unsolvedCell Four Seven [ One; Three ]) ]
+        Fudoku.Tuple.cellsLinkedByDigits
+            [ (unsolvedCellRC Four Five [ One; Two ])
+              (unsolvedCellRC Four Six [ Two; Three ])
+              (unsolvedCellRC Four Seven [ One; Three ]) ]
             (Set.ofList [ One; Two; Three ])
     )
 
     Assert.AreEqual(
         true, // 8 -> 5 -> 6 -> 7 -> 8
-        Tuple.cellsLinkedByDigits
-            [ (unsolvedCell Four Five [ One; Two; Nine ])
-              (unsolvedCell Four Six [ Two; Three; Eight ])
-              (unsolvedCell Four Seven [ Three; Four; Seven ])
-              (unsolvedCell Four Eight [ One; Four; Three ]) ]
+        Fudoku.Tuple.cellsLinkedByDigits
+            [ (unsolvedCellRC Four Five [ One; Two; Nine ])
+              (unsolvedCellRC Four Six [ Two; Three; Eight ])
+              (unsolvedCellRC Four Seven [ Three; Four; Seven ])
+              (unsolvedCellRC Four Eight [ One; Four; Three ]) ]
             (Set.ofList [ One; Two; Three; Four ])
     )
 
     Assert.AreEqual(
         true, // 7 -> 8 -> 5 -> 6
-        Tuple.cellsLinkedByDigits
-            [ (unsolvedCell Four Five [ One; Two; Nine ])
-              (unsolvedCell Four Six [ One; Two; Eight ])
-              (unsolvedCell Four Seven [ Three; Four; Seven ])
-              (unsolvedCell Four Eight [ One; Four; Three ]) ]
+        Fudoku.Tuple.cellsLinkedByDigits
+            [ (unsolvedCellRC Four Five [ One; Two; Nine ])
+              (unsolvedCellRC Four Six [ One; Two; Eight ])
+              (unsolvedCellRC Four Seven [ Three; Four; Seven ])
+              (unsolvedCellRC Four Eight [ One; Four; Three ]) ]
             (Set.ofList [ One; Two; Three; Four ])
     )
 
     Assert.AreEqual(
         true,
-        Tuple.cellsLinkedByDigits
-            [ (unsolvedCell Four Five [ One; Two ])
-              (unsolvedCell Four Six [ One; Two ])
-              (unsolvedCell Four Seven [ Two; Three ]) ]
+        Fudoku.Tuple.cellsLinkedByDigits
+            [ (unsolvedCellRC Four Five [ One; Two ])
+              (unsolvedCellRC Four Six [ One; Two ])
+              (unsolvedCellRC Four Seven [ Two; Three ]) ]
             (Set.ofList [ One; Two; Three ])
     )
 
     Assert.AreEqual(
         false,
-        Tuple.cellsLinkedByDigits
-            [ (unsolvedCell Four Five [ One; Two ])
-              (unsolvedCell Four Six [ One; Two ])
-              (unsolvedCell Four Seven [ Three; Four ])
-              (unsolvedCell Four Eight [ Three; Four ]) ]
+        Fudoku.Tuple.cellsLinkedByDigits
+            [ (unsolvedCellRC Four Five [ One; Two ])
+              (unsolvedCellRC Four Six [ One; Two ])
+              (unsolvedCellRC Four Seven [ Three; Four ])
+              (unsolvedCellRC Four Eight [ Three; Four ]) ]
             (Set.ofList [ One; Two; Three; Four ])
     )

@@ -1,0 +1,2 @@
+module Fudoku.Tests.PuzzleIO
+
