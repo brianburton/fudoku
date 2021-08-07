@@ -4,7 +4,7 @@ open Domain
 open Puzzle
 
 module SingleDigit =
-    let singlePencilRule lookup group =
+    let private singlePencilRule lookup group =
         let changes =
             group
             |> List.map lookup
@@ -17,6 +17,32 @@ module SingleDigit =
 
     let rule lookup = singlePencilRule lookup AllPositions
 
+module FixPencils =
+
+    let private fixPencilsRule lookup =
+        let solveGroup group =
+            let cellsInGroup = List.map lookup group
+
+            let digitsInGroup =
+                cellsInGroup
+                |> List.map cellDigit
+                |> List.fold Set.union Set.empty
+
+            let pencilsToRemoveFromCell c =
+                Set.intersect digitsInGroup (cellPencils c)
+
+            cellsInGroup
+            |> List.map (fun c -> c, pencilsToRemoveFromCell c)
+            |> List.filter (fun (_, ds) -> ds.Count > 0)
+            |> List.map (fun (c, ds) -> c.position, RemovePencils ds)
+
+        let changes = List.collect solveGroup AllGroups
+
+        { rule = "fix-pencils"
+          changes = changes }
+
+    let rule lookup = fixPencilsRule lookup
+
 module Tuple =
 
     let cellsLinkedByDigits (cells: Cell list) (digits: Set<Digit>) : bool =
@@ -25,17 +51,13 @@ module Tuple =
             |> List.filter (fun c -> Set.contains digit (cellPencils c))
             |> List.map (fun c -> digit, c)
 
-        let rec next (remainingCells: Cell list) (remainingDigits: Set<Digit>) (current: Cell) =
-            let impl digit cell =
+        let rec solveForCell (remainingCells: Cell list) (remainingDigits: Set<Digit>) (current: Cell) =
+            let tryNextCell digit cell =
                 let newRemainingCells = List.except [ cell ] remainingCells
                 let newRemainingDigits = Set.remove digit remainingDigits
-                next newRemainingCells newRemainingDigits cell
+                solveForCell newRemainingCells newRemainingDigits cell
 
-            if remainingCells.IsEmpty && remainingDigits.IsEmpty then
-                true
-            elif remainingCells.IsEmpty || remainingDigits.IsEmpty then
-                false
-            else
+            let tryRemainingCells =
                 let currentDigits = (cellPencils current)
 
                 let availableDigits =
@@ -44,9 +66,16 @@ module Tuple =
                 availableDigits
                 |> Set.toList
                 |> List.collect (fun d -> (cellsWithPencil d remainingCells))
-                |> List.exists (fun (d, c) -> impl d c)
+                |> List.exists (fun (d, c) -> tryNextCell d c)
 
-        cells |> List.exists (next cells digits)
+            if remainingCells.IsEmpty && remainingDigits.IsEmpty then
+                true
+            elif remainingCells.IsEmpty || remainingDigits.IsEmpty then
+                false
+            else
+                tryRemainingCells
+
+        List.exists (solveForCell cells digits) cells
 
     let private summarize (group: Position list) (combo: DigitCombination) (lookup: CellFinder) =
         let len = combo.inside.Length
