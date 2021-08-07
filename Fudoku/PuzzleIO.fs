@@ -4,7 +4,7 @@ open Fudoku.Domain
 open Fudoku.Puzzle
 open System.Text.RegularExpressions
 
-let private digitToString d =
+let digitToString d =
     match d with
     | One -> "1"
     | Two -> "2"
@@ -16,10 +16,13 @@ let private digitToString d =
     | Eight -> "8"
     | Nine -> "9"
 
-let private digitsToString ds =
+let digitsToString ds =
     Set.toList ds
     |> List.map digitToString
     |> List.fold (fun acc s -> acc + s) ""
+
+let positionToString pos =
+    $"({pos.row},{pos.col})"
 
 let stringToPuzzle source =
     let charToDigit c =

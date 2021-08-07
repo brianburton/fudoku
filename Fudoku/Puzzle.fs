@@ -16,6 +16,11 @@ type RuleResult =
 
 type Rule = CellFinder -> RuleResult
 
+type CellDiff =
+    { diffPosition: Position
+      before: CellValue
+      after: CellValue }
+
 let emptyPuzzle: Puzzle =
     AllPositions
     |> List.map (fun p -> p, starterCell p)
@@ -63,3 +68,13 @@ let applyRules lookup rules =
     let emptyResult = { rule = ""; changes = List.empty }
 
     rules |> List.fold applyRule emptyResult
+
+let diffPuzzles pz1 pz2 =
+    AllPositions
+    |> List.map (fun p -> p, (Map.find p pz1), (Map.find p pz2))
+    |> List.filter (fun (_, a, b) -> a <> b)
+    |> List.map
+        (fun (p, a, b) ->
+            { diffPosition = p
+              before = a.value
+              after = b.value })
