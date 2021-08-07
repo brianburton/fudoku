@@ -11,13 +11,13 @@ let printResults puzzle (steps: SolutionStep list) =
             match diff with
             | { diffPosition = p
                 before = _
-                after = Answer d } -> printfn $"   {positionToString p}: Solved {digitToString d}"
+                after = Answer d } -> printfn $"   {p}: Solved {digitToString d}"
             | { diffPosition = p
                 before = Pencils b
-                after = Pencils a } -> printfn $"   {positionToString p}: {digitsToString b} -> {digitsToString a}"
+                after = Pencils a } -> printfn $"   {p}: {digitsToString b} -> {digitsToString a}"
             | { diffPosition = p
                 before = b
-                after = a } -> printfn $"   {positionToString p}: ??? {b}->{a}"
+                after = a } -> printfn $"   {p}: ??? {b}->{a}"
             printDiffs tail
 
         match diffs with
@@ -44,7 +44,7 @@ let main _ =
 
     match stringToPuzzle source with
     | Ok pz ->
-        let result, steps = Solver.solvePuzzle pz
+        let _, steps = Solver.solvePuzzle pz
         printResults pz steps
     | Error e -> printfn $"error parsing puzzle: %s{e.Message}"
 

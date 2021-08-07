@@ -12,13 +12,32 @@ type Digit =
     | Seven
     | Eight
     | Nine
+    override this.ToString() =
+        match this with
+        | One -> "1"
+        | Two -> "2"
+        | Three -> "3"
+        | Four -> "4"
+        | Five -> "5"
+        | Six -> "6"
+        | Seven -> "7"
+        | Eight -> "8"
+        | Nine -> "9"
 
 type Segment =
     | SegOne
     | SegTwo
     | SegThree
+    override this.ToString() =
+        match this with
+        | SegOne -> "S1"
+        | SegTwo -> "S2"
+        | SegThree -> "S3"
 
-type Position = { row: Digit; col: Digit }
+type Position =
+    { row: Digit
+      col: Digit }
+    override this.ToString() = $"({this.row},{this.col})"
 
 type CellValue =
     | Answer of Digit

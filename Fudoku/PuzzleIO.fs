@@ -4,25 +4,12 @@ open Fudoku.Domain
 open Fudoku.Puzzle
 open System.Text.RegularExpressions
 
-let digitToString d =
-    match d with
-    | One -> "1"
-    | Two -> "2"
-    | Three -> "3"
-    | Four -> "4"
-    | Five -> "5"
-    | Six -> "6"
-    | Seven -> "7"
-    | Eight -> "8"
-    | Nine -> "9"
+let digitToString d = d.ToString()
 
 let digitsToString ds =
     Set.toList ds
     |> List.map digitToString
     |> List.fold (fun acc s -> acc + s) ""
-
-let positionToString pos =
-    $"({pos.row},{pos.col})"
 
 let stringToPuzzle source =
     let charToDigit c =
