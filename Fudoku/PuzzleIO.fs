@@ -2,6 +2,7 @@ module Fudoku.PuzzleIO
 
 open Fudoku.Domain
 open Fudoku.Puzzle
+open System.IO
 open System.Text.RegularExpressions
 
 let digitToString d = d.ToString()
@@ -45,6 +46,17 @@ let stringToPuzzle source =
         Ok puzzle
     with
     | e -> Error e
+
+let readFileAsString path =
+    try
+        let text = File.ReadAllText(path)
+        Ok text
+    with
+    |e -> Error e
+
+let readFileAsPuzzle path =
+    readFileAsString path
+    |> Result.bind stringToPuzzle
 
 let solvedCellsToString cells =
     let cell c =

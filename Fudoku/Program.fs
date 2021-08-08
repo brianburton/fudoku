@@ -1,5 +1,6 @@
 ﻿module Fudoku.App
 
+open System.IO
 open Fudoku.Domain
 open Fudoku.Solver
 open Fudoku.Puzzle
@@ -37,14 +38,22 @@ let printResults puzzle (steps: SolutionStep list) =
     | step::tail -> printSteps puzzle step tail
     | _ -> ()
 
+exception BadArguments of string
+
 [<EntryPoint>]
-let main _ =
+let main args =
     let source =
         "5..86279.  .........  ...9.3.48 ......5..  1.97.52.4 ..7......  91.5.6...  .........  .86419..7"
 
-    match stringToPuzzle source with
+    let puzzle =
+        match args with
+        | [| path |]-> readFileAsPuzzle path
+        | [| |] -> stringToPuzzle source
+        | _-> Error (BadArguments "usage: Fudoku path")
+
+    match puzzle with
     | Ok pz ->
-        let _, steps = Solver.solvePuzzle pz
+        let _, steps = solvePuzzle pz
         printResults pz steps
     | Error e -> printfn $"error parsing puzzle: %s{e.Message}"
 

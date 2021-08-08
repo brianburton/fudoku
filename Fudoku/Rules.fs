@@ -173,17 +173,17 @@ module SingleBox =
 
         let insidePencils = groupPencils insideCells
         let outsidePencils = groupPencils outsideCells
-        let commonPencils = Set.intersect insidePencils outsidePencils
-        let isAllInBox = commonPencils.Count = 0
+        let uniquePencils = Set.difference insidePencils outsidePencils
+        let isAllInBox = uniquePencils.Count > 0
 
         let boxCellsToChange () =
             let first = List.head insideCells
             let neighbors = boxNeighbors first.position
                             |> List.except combo.inside
                             |> List.map lookup
-                            |> List.filter (fun c -> cellContainsPencils c insidePencils)
+                            |> List.filter (fun c -> cellContainsPencils c uniquePencils)
             neighbors
-            |> List.map (fun c -> c.position, RemovePencils insidePencils)
+            |> List.map (fun c -> c.position, RemovePencils uniquePencils)
 
         let changes =
             if isAllInBox then boxCellsToChange () else List.empty
