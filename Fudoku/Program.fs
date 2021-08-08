@@ -63,9 +63,10 @@ let main args =
         | _ -> Error(BadArguments "usage: Fudoku path")
 
     match puzzle with
-    | Ok pz ->
-        let _, steps = solvePuzzle pz
-        printResults pz steps
+    | Ok barePuzzle ->
+        let initializedPuzzle = fixPencils barePuzzle
+        let _, steps = solvePuzzle initializedPuzzle
+        printResults initializedPuzzle steps
     | Error e -> printfn $"error parsing puzzle: %s{e.ToString()}"
 
     0 // return an integer exit code

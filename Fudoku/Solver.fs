@@ -6,9 +6,13 @@ type SolutionStep = { rule: string; puzzle: Puzzle }
 
 let AllRules =
     [ FixPencils.rule; SingleDigit.rule ]
-    @ SingleBox.rules
-      @ Tuple.singleCellRules
+    @ Tuple.singleCellRules
+      @ SingleBox.rules
         @ Tuple.nakedRules @ Tuple.hiddenRules
+
+let fixPencils puzzle =
+    let x = applyRules (cellFinder puzzle) [ FixPencils.rule ]
+    applyRuleResults x.changes puzzle
 
 let solvePuzzle puzzle =
     let applyAllRulesToPuzzle pz = applyRules (cellFinder pz) AllRules
