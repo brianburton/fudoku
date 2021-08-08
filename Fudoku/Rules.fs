@@ -150,7 +150,7 @@ module Tuple =
         { rule = $"naked-pencils-%d{len}"
           changes = changes }
 
-    let singleCellRule =
+    let singleCellRules =
         List.allPairs AllGroups DigitSingles
         |> List.map (fun (group, combo) -> hiddenPencils group combo)
 
@@ -161,3 +161,44 @@ module Tuple =
     let nakedRules =
         List.allPairs AllGroups MultiDigitCombinations
         |> List.map (fun (group, combo) -> nakedPencils group combo)
+
+module SingleBox =
+    let private singleBoxRule combo (lookup:CellFinder) =
+        let insideCells : Cell list =
+            combo.inside |> List.map lookup
+
+        let outsideCells : Cell list =
+            combo.outside
+            |> List.map lookup
+
+        let insidePencils = groupPencils insideCells
+        let outsidePencils = groupPencils outsideCells
+        let commonPencils = Set.intersect insidePencils outsidePencils
+        let isAllInBox = commonPencils.Count = 0
+
+        let boxCellsToChange () =
+            let first = List.head insideCells
+            let neighbors = boxNeighbors first.position
+                            |> List.except combo.inside
+                            |> List.map lookup
+                            |> List.filter (fun c -> cellContainsPencils c insidePencils)
+            neighbors
+            |> List.map (fun c -> c.position, RemovePencils insidePencils)
+
+        let changes =
+            if isAllInBox then boxCellsToChange () else List.empty
+
+        { rule = "single-box"
+          changes = changes }
+
+    let rules =
+        let rowMappers =
+            AllDigits
+            |> List.map (fun r -> (fun c -> position r c))
+        let colMappers =
+            AllDigits
+            |> List.map (fun c -> (fun r -> position r c))
+        let allMappers = rowMappers @ colMappers
+        List.allPairs allMappers SingleSegmentDigitTriples
+        |> List.map (fun (mapper,combo)-> combinationMapper mapper combo)
+        |> List.map (fun combo -> singleBoxRule combo)

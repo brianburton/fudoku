@@ -102,6 +102,17 @@ let segmentDigits s =
     | SegTwo -> [ Four; Five; Six ]
     | SegThree -> [ Seven; Eight; Nine ]
 
+let SingleSegmentDigitTriples =
+    let segmentCount (dc: DigitCombination) =
+        dc.inside
+        |> List.map segment
+        |> List.distinct
+        |> List.length
+
+    let hasSingleSegment dc = (segmentCount dc) = 1
+
+    DigitTriples |> List.filter hasSingleSegment
+
 let position r c = { row = r; col = c }
 
 let positions rows cols =
@@ -128,6 +139,8 @@ let boxContaining r c =
     | SegThree, SegOne -> Seven
     | SegThree, SegTwo -> Eight
     | SegThree, SegThree -> Nine
+
+let boxContainingPos p = boxContaining p.row p.col
 
 let row r = positions [ r ] AllDigits
 
