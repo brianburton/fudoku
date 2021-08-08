@@ -58,16 +58,16 @@ let applyRuleResults results puzzle =
 
     applied
 
-let applyRules lookup rules =
-    let applyRule prior rule =
-        if List.isEmpty prior.changes then
-            rule lookup
+let rec applyRules lookup rules =
+    match rules with
+    | [] -> { rule = ""; changes = List.empty }
+    | rule :: tail ->
+        let result = rule lookup
+
+        if result.changes.Length > 0 then
+            result
         else
-            prior
-
-    let emptyResult = { rule = ""; changes = List.empty }
-
-    rules |> List.fold applyRule emptyResult
+            applyRules lookup tail
 
 let diffPuzzles pz1 pz2 =
     AllPositions
