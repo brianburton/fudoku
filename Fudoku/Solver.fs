@@ -11,26 +11,35 @@ let AllRules =
         @ Tuple.nakedRules @ Tuple.hiddenRules
 
 let fixPencils puzzle =
-    let x = applyRules (cellFinder puzzle) [ FixPencils.rule ]
+    let x =
+        applyRules (cellFinder puzzle) [ FixPencils.rule ]
+
     applyRuleResults x.changes puzzle
 
 let solvePuzzle puzzle =
-    let applyAllRulesToPuzzle pz = applyRules (cellFinder pz) AllRules
 
-    let mutable steps =
+    let rec loop priorSteps currentPuzzle =
+        let results =
+            applyRules (cellFinder currentPuzzle) AllRules
+
+        if results.changes.Length = 0 then
+            priorSteps
+        else
+            let newPuzzle =
+                applyRuleResults results.changes currentPuzzle
+
+            let thisStep =
+                List.singleton
+                    { rule = results.rule
+                      puzzle = newPuzzle }
+
+            let newSteps = priorSteps @ thisStep
+            loop newSteps newPuzzle
+
+
+    let initialSteps =
         List.singleton { rule = "start"; puzzle = puzzle }
 
-    let mutable puzzle2 = puzzle
-    let mutable results = applyAllRulesToPuzzle puzzle2
-
-    while results.changes.Length > 0 do
-        puzzle2 <- applyRuleResults results.changes puzzle2
-
-        let step =
-            { rule = results.rule
-              puzzle = puzzle2 }
-
-        steps <- steps @ [ step ]
-        results <- applyAllRulesToPuzzle puzzle2
-
-    (puzzle2, steps)
+    let finalSteps = loop initialSteps puzzle
+    let finalPuzzle = (List.last finalSteps).puzzle
+    (finalPuzzle, finalSteps)
