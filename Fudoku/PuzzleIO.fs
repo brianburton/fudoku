@@ -5,6 +5,12 @@ open Fudoku.Puzzle
 open System.IO
 open System.Text.RegularExpressions
 
+let private wrap f =
+    try
+        f ()
+    with
+    | e -> (Error $"{e.Message}")
+
 let digitToString d = d.ToString()
 
 let digitsToString ds =
@@ -37,22 +43,20 @@ let stringToPuzzle source =
     let digits =
         filtered |> Seq.map charToDigit |> Seq.toList
 
-    try
-        let puzzle =
-            List.zip AllPositions digits
-            |> List.map createCell
-            |> Map.ofList
+    wrap
+        (fun () ->
+            let puzzle =
+                List.zip AllPositions digits
+                |> List.map createCell
+                |> Map.ofList
 
-        Ok puzzle
-    with
-    | e -> Error e
+            Ok puzzle)
 
 let readFileAsString path =
-    try
-        let text = File.ReadAllText(path)
-        Ok text
-    with
-    |e -> Error e
+    wrap
+        (fun () ->
+            let text = File.ReadAllText(path)
+            Ok text)
 
 let readFileAsPuzzle path =
     readFileAsString path
@@ -96,16 +100,18 @@ let puzzleToString pz =
         $"{solved}{unsolved}"
 
     let rowStrings =
-        AllDigits
-        |> List.map row
-        |> List.map rowToString
+        AllDigits |> List.map row |> List.map rowToString
 
     let solvedBorder = "+-------+-------+-------+"
-    let unsolvedBorder = "+-------------------------------+-------------------------------+-------------------------------+"
+
+    let unsolvedBorder =
+        "+-------------------------------+-------------------------------+-------------------------------+"
+
     let combinedBorder = $"{solvedBorder}{unsolvedBorder}"
+
     let rec bordered rs ls =
         match rs with
-        | a::b::c::tail -> bordered tail (ls @ [combinedBorder] @ [ a ; b ; c ])
+        | a :: b :: c :: tail -> bordered tail (ls @ [ combinedBorder ] @ [ a; b; c ])
         | _ -> ls
 
     (bordered rowStrings []) @ [ combinedBorder ]

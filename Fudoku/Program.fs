@@ -60,13 +60,13 @@ let main args =
         match args with
         | [| path |] -> readFileAsPuzzle path
         | [||] -> stringToPuzzle source
-        | _ -> Error(BadArguments "usage: Fudoku path")
+        | _ -> Error "usage: Fudoku path"
 
     match puzzle with
     | Ok barePuzzle ->
         let initializedPuzzle = fixPencils barePuzzle
         let _, steps = solvePuzzle initializedPuzzle
         printResults initializedPuzzle steps
-    | Error e -> printfn $"error parsing puzzle: %s{e.ToString()}"
+    | Error e -> printfn $"error: %s{e}"
 
     0 // return an integer exit code
