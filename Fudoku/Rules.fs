@@ -108,7 +108,7 @@ module Tuple =
             else
                 List.empty
 
-        { rule = $"single-cell-pencil"
+        { rule = "single-cell"
           changes = changes }
 
     let hiddenPencils (group: Position list) (combo: DigitCombination) (lookup: CellFinder) =
@@ -150,9 +150,15 @@ module Tuple =
         { rule = $"naked-pencils-%d{len}"
           changes = changes }
 
-    let singleCellRules =
-        List.allPairs AllGroups DigitSingles
-        |> List.map (fun (group, combo) -> singleCellPencil group combo)
+    let singleCellRule lookup =
+        let changes =
+            List.allPairs AllGroups DigitSingles
+            |> List.map (fun (group, combo) -> singleCellPencil group combo lookup)
+            |> List.collect (fun result -> result.changes)
+
+        { rule = "single-cell"
+          changes = changes }
+
 
     let hiddenRules =
         List.allPairs AllGroups MultiDigitCombinations
@@ -163,30 +169,36 @@ module Tuple =
         |> List.map (fun (group, combo) -> nakedPencils group combo)
 
 module SingleBox =
-    let private singleBoxRule combo (lookup:CellFinder) =
-        let insideCells : Cell list =
-            combo.inside |> List.map lookup
+    let private singleBoxRule combo (lookup: CellFinder) =
+        let insideCells: Cell list = combo.inside |> List.map lookup
 
-        let outsideCells : Cell list =
-            combo.outside
-            |> List.map lookup
+        let outsideCells: Cell list = combo.outside |> List.map lookup
 
         let insidePencils = groupPencils insideCells
         let outsidePencils = groupPencils outsideCells
-        let uniquePencils = Set.difference insidePencils outsidePencils
+
+        let uniquePencils =
+            Set.difference insidePencils outsidePencils
+
         let isAllInBox = uniquePencils.Count > 0
 
         let boxCellsToChange () =
             let first = List.head insideCells
-            let neighbors = boxNeighbors first.position
-                            |> List.except combo.inside
-                            |> List.map lookup
-                            |> List.filter (fun c -> cellContainsPencils c uniquePencils)
+
+            let neighbors =
+                boxNeighbors first.position
+                |> List.except combo.inside
+                |> List.map lookup
+                |> List.filter (fun c -> cellContainsPencils c uniquePencils)
+
             neighbors
             |> List.map (fun c -> c.position, RemovePencils uniquePencils)
 
         let changes =
-            if isAllInBox then boxCellsToChange () else List.empty
+            if isAllInBox then
+                boxCellsToChange ()
+            else
+                List.empty
 
         { rule = "single-box"
           changes = changes }
@@ -195,10 +207,13 @@ module SingleBox =
         let rowMappers =
             AllDigits
             |> List.map (fun r -> (fun c -> position r c))
+
         let colMappers =
             AllDigits
             |> List.map (fun c -> (fun r -> position r c))
+
         let allMappers = rowMappers @ colMappers
+
         List.allPairs allMappers SingleSegmentDigitTriples
-        |> List.map (fun (mapper,combo)-> combinationMapper mapper combo)
+        |> List.map (fun (mapper, combo) -> combinationMapper mapper combo)
         |> List.map (fun combo -> singleBoxRule combo)

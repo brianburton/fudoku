@@ -5,10 +5,11 @@ open Puzzle
 type SolutionStep = { rule: string; puzzle: Puzzle }
 
 let AllRules =
-    [ FixPencils.rule; SingleDigit.rule ]
-    @ Tuple.singleCellRules
-      @ SingleBox.rules
-        @ Tuple.nakedRules @ Tuple.hiddenRules
+    [ FixPencils.rule
+      SingleDigit.rule
+      Tuple.singleCellRule ]
+    @ SingleBox.rules
+      @ Tuple.nakedRules @ Tuple.hiddenRules
 
 let fixPencils puzzle =
     let x =
