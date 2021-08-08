@@ -57,6 +57,10 @@ type PositionCombination =
     { inside: Position list
       outside: Position list }
 
+type CellCombination =
+    { inside: Cell list
+      outside: Cell list }
+
 let AllDigits =
     [ One
       Two
@@ -214,7 +218,7 @@ let groupPencils group =
     |> List.map cellPencils
     |> List.fold Set.union Set.empty
 
-let comboCellsForGroup (group: Position list) (combo: DigitCombination) (lookup: CellFinder) =
+let lookupCellCombination (group: Position list) (combo: DigitCombination) (lookup: CellFinder) =
     let mapper =
         let map = List.zip AllDigits group |> Map.ofList
         (fun digit -> Map.find digit map)
@@ -227,4 +231,5 @@ let comboCellsForGroup (group: Position list) (combo: DigitCombination) (lookup:
         |> List.map mapper
         |> List.map lookup
 
-    (insideCells, outsideCells)
+    { CellCombination.inside = insideCells
+      outside = outsideCells }

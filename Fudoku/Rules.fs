@@ -45,14 +45,14 @@ module FixPencils =
 
 module SingleCell =
     let private singleCellPencil (group: Position list) (combo: DigitCombination) (lookup: CellFinder) =
-        let insideCells, outsideCells = comboCellsForGroup group combo lookup
+        let cells = lookupCellCombination group combo lookup
 
-        let insideDigits = groupPencils insideCells
-        let outsideDigits = groupPencils outsideCells
+        let insideDigits = groupPencils cells.inside
+        let outsideDigits = groupPencils cells.outside
         let uniqueDigits = insideDigits - outsideDigits
 
         if uniqueDigits.Count = 1 then
-            insideCells
+            cells.inside
             |> List.map (fun c -> c.position, Solved uniqueDigits.MinimumElement)
         else
             List.empty
@@ -100,18 +100,18 @@ module Tuple =
         List.exists (solveForCell cells digits) cells
 
     let hiddenPencils (group: Position list) (combo: DigitCombination) (lookup: CellFinder) =
-        let insideCells, outsideCells = comboCellsForGroup group combo lookup
+        let cells = lookupCellCombination group combo lookup
 
-        let len = insideCells.Length
-        let insideDigits = groupPencils insideCells
-        let outsideDigits = groupPencils outsideCells
+        let len = cells.inside.Length
+        let insideDigits = groupPencils cells.inside
+        let outsideDigits = groupPencils cells.outside
         let uniqueDigits = insideDigits - outsideDigits
 
         let changes =
             if uniqueDigits.Count = len
                && uniqueDigits <> insideDigits
-               && cellsLinkedByDigits insideCells uniqueDigits then
-                insideCells
+               && cellsLinkedByDigits cells.inside uniqueDigits then
+                cells.inside
                 |> List.map (fun c -> c.position, RetainPencils uniqueDigits)
             else
                 List.empty
@@ -120,18 +120,18 @@ module Tuple =
           changes = changes }
 
     let nakedPencils (group: Position list) (combo: DigitCombination) (lookup: CellFinder) =
-        let insideCells, outsideCells = comboCellsForGroup group combo lookup
+        let cells = lookupCellCombination group combo lookup
 
-        let len = insideCells.Length
-        let insideDigits = groupPencils insideCells
-        let outsideDigits = groupPencils outsideCells
+        let len = cells.inside.Length
+        let insideDigits = groupPencils cells.inside
+        let outsideDigits = groupPencils cells.outside
         let commonDigits = Set.intersect insideDigits outsideDigits
 
         let changes =
             if insideDigits.Count = len
                && commonDigits.Count > 0
-               && cellsLinkedByDigits insideCells insideDigits then
-                outsideCells
+               && cellsLinkedByDigits cells.inside insideDigits then
+                cells.outside
                 |> List.filter (fun c -> cellContainsPencils c commonDigits)
                 |> List.map (fun c -> c.position, RemovePencils commonDigits)
             else
@@ -149,7 +149,7 @@ module Tuple =
         |> List.map (fun (group, combo) -> nakedPencils group combo)
 
 module SingleBox =
-    let private singleBoxRule combo (lookup: CellFinder) =
+    let private singleBoxRule (combo: PositionCombination) (lookup: CellFinder) =
         let insideCells: Cell list = combo.inside |> List.map lookup
 
         let outsideCells: Cell list = combo.outside |> List.map lookup
