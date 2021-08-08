@@ -213,3 +213,18 @@ let groupPencils group =
     group
     |> List.map cellPencils
     |> List.fold Set.union Set.empty
+
+let comboCellsForGroup (group: Position list) (combo: DigitCombination) (lookup: CellFinder) =
+    let mapper =
+        let map = List.zip AllDigits group |> Map.ofList
+        (fun digit -> Map.find digit map)
+
+    let insideCells =
+        combo.inside |> List.map mapper |> List.map lookup
+
+    let outsideCells =
+        combo.outside
+        |> List.map mapper
+        |> List.map lookup
+
+    (insideCells, outsideCells)

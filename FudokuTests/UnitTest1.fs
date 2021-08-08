@@ -26,13 +26,7 @@ let singleDigitTests () =
     Assert.AreEqual(expected, actual.changes)
 
 [<Test>]
-let singleCellPencilTests () =
-    let group = row One
-
-    let combo: DigitCombination =
-        { inside = [ Two ]
-          outside = List.except [ Two ] AllDigits }
-
+let singleCellTests () =
     let outsideDigits = List.except [ Nine ] AllDigits
 
     let before =
@@ -50,7 +44,7 @@ let singleCellPencilTests () =
     let expected = [ (position One Two), Solved Nine ]
 
     let actual =
-        Fudoku.Tuple.singleCellPencil group combo (cellFinder before)
+        Fudoku.SingleCell.rule (cellFinder before)
 
     Assert.AreEqual(expected, actual.changes)
 
