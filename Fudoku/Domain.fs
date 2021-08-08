@@ -219,17 +219,15 @@ let groupPencils group =
     |> List.fold Set.union Set.empty
 
 let lookupCellCombination (group: Position list) (combo: DigitCombination) (lookup: CellFinder) =
-    let mapper =
+    let posMapper =
         let map = List.zip AllDigits group |> Map.ofList
         (fun digit -> Map.find digit map)
 
-    let insideCells =
-        combo.inside |> List.map mapper |> List.map lookup
+    let cellMapper pos = lookup pos
+    let digitMapper = posMapper >> cellMapper
 
-    let outsideCells =
-        combo.outside
-        |> List.map mapper
-        |> List.map lookup
+    let insideCells = combo.inside |> List.map digitMapper
+    let outsideCells = combo.outside |> List.map digitMapper
 
     { CellCombination.inside = insideCells
       outside = outsideCells }
