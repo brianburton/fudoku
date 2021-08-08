@@ -7,8 +7,8 @@ type SolutionStep = { rule: string; puzzle: Puzzle }
 let AllRules =
     [ FixPencils.rule; SingleDigit.rule ]
     @ SingleBox.rules
-    @ Tuple.singleCellRules
-      @ Tuple.nakedRules @ Tuple.hiddenRules
+      @ Tuple.singleCellRules
+        @ Tuple.nakedRules @ Tuple.hiddenRules
 
 let solvePuzzle puzzle =
     let applyAllRulesToPuzzle pz = applyRules (cellFinder pz) AllRules

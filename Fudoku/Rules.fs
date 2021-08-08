@@ -152,7 +152,7 @@ module Tuple =
 
     let singleCellRules =
         List.allPairs AllGroups DigitSingles
-        |> List.map (fun (group, combo) -> hiddenPencils group combo)
+        |> List.map (fun (group, combo) -> singleCellPencil group combo)
 
     let hiddenRules =
         List.allPairs AllGroups MultiDigitCombinations
