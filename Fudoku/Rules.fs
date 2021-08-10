@@ -132,7 +132,7 @@ module Tuple =
                && commonDigits.Count > 0
                && cellsLinkedByDigits cells.inside insideDigits then
                 cells.outside
-                |> List.filter (fun c -> cellContainsPencils c commonDigits)
+                |> List.filter (cellContainsPencils commonDigits)
                 |> List.map (fun c -> c.position, RemovePencils commonDigits)
             else
                 List.empty
@@ -169,7 +169,7 @@ module SingleBox =
                 boxNeighbors first.position
                 |> List.except combo.inside
                 |> List.map lookup
-                |> List.filter (fun c -> cellContainsPencils c uniquePencils)
+                |> List.filter (cellContainsPencils uniquePencils)
 
             neighbors
             |> List.map (fun c -> c.position, RemovePencils uniquePencils)

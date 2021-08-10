@@ -208,7 +208,7 @@ let cellDigit c =
     | Pencils _ -> Set.empty
     | Answer d -> Set.singleton d
 
-let cellContainsPencils c ds =
+let cellContainsPencils ds c =
     let pencils = cellPencils c
     let common = Set.intersect ds pencils
     (Set.count common) > 0

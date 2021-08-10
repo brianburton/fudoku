@@ -12,6 +12,7 @@
         <Compile Include="Rules.fs" />
         <Compile Include="Solver.fs" />
         <Compile Include="PuzzleIO.fs" />
+        <Compile Include="FishRules.fs" />
         <Compile Include="Program.fs" />
     </ItemGroup>
 

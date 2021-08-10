@@ -28,3 +28,11 @@ let rec combinations len list =
     if len = 1 then length1 ()
     elif len = list.Length then single ()
     else normal list.Head list.Tail
+
+let findAndRemove (list: 'a list) (condition: 'a -> bool) =
+    let found = List.filter condition list
+
+    match found with
+    | [] -> None
+    | [single]  -> Some(single, [])
+    | head :: _ -> Some(head, List.except [head] list)
