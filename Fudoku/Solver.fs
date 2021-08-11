@@ -8,6 +8,8 @@ let AllRules =
     [ FixPencils.rule
       SingleDigit.rule
       SingleCell.rule ]
+    @ Fish.XWingRules
+    @ Fish.SwordfishRules
     @ SingleBox.rules
       @ Tuple.nakedRules @ Tuple.hiddenRules
 

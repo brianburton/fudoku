@@ -1,4 +1,4 @@
-module Fudoku.FishRules
+module Fudoku.Fish
 
 open Fudoku.Domain
 open Fudoku.Utils
@@ -31,40 +31,48 @@ let lookupFishAffected (rowCombo: DigitCombination) (colCombo: DigitCombination)
     |> List.map (fun (r, c) -> position r c)
     |> List.map lookup
 
+let adjacentPositionsInGroup (skip: Set<Position>) (center: Position) (group: Position list) : Position list =
+    let add x found =
+        if (Set.contains x skip) then
+            found
+        else
+            found @ [ x ]
+
+    let rec loop remaining found =
+        match remaining with
+        | [] -> found
+        | [ _ ] -> found
+        | x :: y :: _ when x = center -> add y found
+        | x :: [ y ] when y = center -> add x found
+        | x :: y :: z :: _ when y = center -> found |> add x |> add z
+        | _ :: tail -> loop tail found
+
+    loop group []
+
 let rec allPositionsLinked (positions: Position list) : bool =
 
-    let sameRowOrCol current next =
-        current.row = next.row || current.col = next.col
+    let rec solveForPos (skip: Set<Position>) (path: Position list) (current: Position) =
+        let newPath = path @ [ current ]
+        let newSkip = Set.add current skip
 
-    let rec solveForPos (remainingPositions: Position list) (current: Position) =
-        let nextPos =
-            findAndRemove remainingPositions (sameRowOrCol current)
+        if newSkip.Count = positions.Length then
+            true
+        else
+            let rowNeighbors =
+                positions
+                |> List.filter (fun p -> p.row = current.row)
+                |> adjacentPositionsInGroup newSkip current
 
-        match nextPos with
-        | None -> remainingPositions.IsEmpty
-        | Some (pos, remaining) -> solveForPos remaining pos
+            let colNeighbors =
+                positions
+                |> List.filter (fun p -> p.col = current.col)
+                |> adjacentPositionsInGroup newSkip current
 
-    positions |> List.exists (solveForPos positions)
+            List.append rowNeighbors colNeighbors
+            |> List.exists (solveForPos newSkip newPath)
 
-let atLeastTwoPerRowCol (group: Position list) =
-    let increment key map =
-        let current = Map.tryFind key map
-
-        let next =
-            match current with
-            | Some count -> count + 1
-            | None -> 1
-
-        Map.add key next map
-
-    let addCell map pos =
-        increment ("row", pos.row) map
-        |> increment ("col", pos.col)
-
-    let countsMap = group |> List.fold addCell Map.empty
-
-    Map.toList countsMap
-    |> List.forall (fun (_, count) -> count >= 2)
+    positions
+    |> List.forall (solveForPos Set.empty [])
 
 let allArePresent positions expected mapper =
     let digits =
@@ -76,10 +84,9 @@ let allArePresent positions expected mapper =
 let isValidFish positions rows cols =
     allArePresent positions rows (fun p -> p.row)
     && allArePresent positions cols (fun p -> p.col)
-    && atLeastTwoPerRowCol positions
-    && (allPositionsLinked positions)
+    && allPositionsLinked positions
 
-let fishRuleForCombo (rowCombo: DigitCombination) (colCombo: DigitCombination) (lookup: CellFinder) direction =
+let fishRuleForCombo (rowCombo: DigitCombination) (colCombo: DigitCombination) direction (lookup: CellFinder) =
     let combo =
         lookupFishCells rowCombo colCombo lookup direction
 
@@ -106,3 +113,13 @@ let fishRuleForCombo (rowCombo: DigitCombination) (colCombo: DigitCombination) (
             |> List.map (fun c -> (c.position, RemovePencils uniquePencils))
         else
             []
+
+let makeFishRule combos name =
+    List.allPairs combos combos
+    |> List.allPairs [ RowFish; ColFish ]
+    |> List.map (fun (direction, (rows, cols)) -> fishRuleForCombo rows cols direction)
+    |> List.map (fun f -> (fun lookup -> { rule = name; changes = (f lookup) }))
+
+let XWingRules: Rule list = makeFishRule DigitPairs "x-wing"
+
+let SwordfishRules: Rule list = makeFishRule DigitTriples "swordfish"
