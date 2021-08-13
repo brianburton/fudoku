@@ -49,9 +49,7 @@ type Cell =
 
 type CellFinder = Position -> Cell
 
-type Combination<'T> =
-    { inside: 'T list
-      outside: 'T list }
+type Combination<'T> = { inside: 'T list; outside: 'T list }
 
 let AllDigits =
     [ One
@@ -66,11 +64,11 @@ let AllDigits =
 
 let AllDigitsSet = AllDigits |> Set.ofList
 
-let private createDigitCombos len =
-    let comboOf digits : Combination<Digit> =
-        let others = AllDigits |> List.except digits
-        { inside = digits; outside = others }
+let comboOf digits : Combination<Digit> =
+    let others = AllDigits |> List.except digits
+    { inside = digits; outside = others }
 
+let private createDigitCombos len =
     combinations len AllDigits |> List.map comboOf
 
 let DigitSingles = createDigitCombos 1
@@ -99,15 +97,9 @@ let segmentDigits s =
     | SegThree -> [ Seven; Eight; Nine ]
 
 let SingleSegmentDigitTriples =
-    let segmentCount (dc: Combination<Digit>) =
-        dc.inside
-        |> List.map segment
-        |> List.distinct
-        |> List.length
-
-    let hasSingleSegment dc = (segmentCount dc) = 1
-
-    DigitTriples |> List.filter hasSingleSegment
+    [ comboOf (segmentDigits SegOne)
+      comboOf (segmentDigits SegTwo)
+      comboOf (segmentDigits SegThree) ]
 
 let position r c = { row = r; col = c }
 
@@ -185,10 +177,7 @@ let allNeighbors p =
     List.concat [ r; c; b ] |> List.distinct
 
 let commonNeighbors p1 p2 =
-    let n1 = Set.ofList (allNeighbors p1)
-    let n2 = Set.ofList (allNeighbors p2)
-    Set.intersect n1 n2
-    |> Set.toList
+    intersectLists (allNeighbors p1) (allNeighbors p2)
 
 let solvedCell p d = { position = p; value = Answer d }
 
@@ -221,9 +210,7 @@ let lookupCellCombination (group: Position list) (combo: Combination<Digit>) (lo
         let map = List.zip AllDigits group |> Map.ofList
         (fun digit -> Map.find digit map)
 
-    let cellMapper pos = lookup pos
-    let digitMapper = posMapper >> cellMapper
-
+    let digitMapper pos = posMapper pos |> lookup
     let insideCells = combo.inside |> List.map digitMapper
     let outsideCells = combo.outside |> List.map digitMapper
 
