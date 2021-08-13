@@ -44,7 +44,7 @@ module FixPencils =
     let rule lookup = fixPencilsRule lookup
 
 module SingleCell =
-    let private singleCellPencil (group: Position list) (combo: DigitCombination) (lookup: CellFinder) =
+    let private singleCellPencil (group: Position list) (combo: Combination<Digit>) (lookup: CellFinder) =
         let cells = lookupCellCombination group combo lookup
 
         let insideDigits = groupPencils cells.inside
@@ -99,7 +99,7 @@ module Tuple =
 
         List.exists (solveForCell cells digits) cells
 
-    let hiddenPencils (group: Position list) (combo: DigitCombination) (lookup: CellFinder) =
+    let hiddenPencils (group: Position list) (combo: Combination<Digit>) (lookup: CellFinder) =
         let cells = lookupCellCombination group combo lookup
 
         let len = cells.inside.Length
@@ -119,7 +119,7 @@ module Tuple =
         { rule = $"hidden-pencils-%d{len}"
           changes = changes }
 
-    let nakedPencils (group: Position list) (combo: DigitCombination) (lookup: CellFinder) =
+    let nakedPencils (group: Position list) (combo: Combination<Digit>) (lookup: CellFinder) =
         let cells = lookupCellCombination group combo lookup
 
         let len = cells.inside.Length
@@ -149,7 +149,7 @@ module Tuple =
         |> List.map (fun (group, combo) -> nakedPencils group combo)
 
 module SingleBox =
-    let private singleBoxRule (combo: PositionCombination) (lookup: CellFinder) =
+    let private singleBoxRule (combo: Combination<Position>) (lookup: CellFinder) =
         let insideCells: Cell list = combo.inside |> List.map lookup
 
         let outsideCells: Cell list = combo.outside |> List.map lookup

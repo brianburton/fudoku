@@ -49,17 +49,9 @@ type Cell =
 
 type CellFinder = Position -> Cell
 
-type DigitCombination =
-    { inside: Digit list
-      outside: Digit list }
-
-type PositionCombination =
-    { inside: Position list
-      outside: Position list }
-
-type CellCombination =
-    { inside: Cell list
-      outside: Cell list }
+type Combination<'T> =
+    { inside: 'T list
+      outside: 'T list }
 
 let AllDigits =
     [ One
@@ -75,7 +67,7 @@ let AllDigits =
 let AllDigitsSet = AllDigits |> Set.ofList
 
 let private createDigitCombos len =
-    let comboOf digits : DigitCombination =
+    let comboOf digits : Combination<Digit> =
         let others = AllDigits |> List.except digits
         { inside = digits; outside = others }
 
@@ -107,7 +99,7 @@ let segmentDigits s =
     | SegThree -> [ Seven; Eight; Nine ]
 
 let SingleSegmentDigitTriples =
-    let segmentCount (dc: DigitCombination) =
+    let segmentCount (dc: Combination<Digit>) =
         dc.inside
         |> List.map segment
         |> List.distinct
@@ -125,7 +117,7 @@ let positions rows cols =
 
 let AllPositions = positions AllDigits AllDigits
 
-let combinationMapper (mapping: Digit -> Position) (combo: DigitCombination) : PositionCombination =
+let combinationMapper (mapping: Digit -> Position) (combo: Combination<Digit>) : Combination<Position> =
     let posInside = combo.inside |> List.map mapping
     let posOutside = combo.outside |> List.map mapping
 
@@ -224,7 +216,7 @@ let groupPencils group =
     |> List.map cellPencils
     |> List.fold Set.union Set.empty
 
-let lookupCellCombination (group: Position list) (combo: DigitCombination) (lookup: CellFinder) =
+let lookupCellCombination (group: Position list) (combo: Combination<Digit>) (lookup: CellFinder) =
     let posMapper =
         let map = List.zip AllDigits group |> Map.ofList
         (fun digit -> Map.find digit map)
@@ -235,5 +227,5 @@ let lookupCellCombination (group: Position list) (combo: DigitCombination) (look
     let insideCells = combo.inside |> List.map digitMapper
     let outsideCells = combo.outside |> List.map digitMapper
 
-    { CellCombination.inside = insideCells
+    { inside = insideCells
       outside = outsideCells }

@@ -52,7 +52,7 @@ let singleCellTests () =
 let hiddenPairTest () =
     let group = row (One)
 
-    let combo: DigitCombination =
+    let combo: Combination<Digit> =
         { inside = [ One; Two ]
           outside = List.except [ One; Two ] AllDigits }
 

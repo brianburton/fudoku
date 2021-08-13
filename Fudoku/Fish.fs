@@ -8,7 +8,7 @@ type FishDirection =
     | RowFish
     | ColFish
 
-let lookupFishCells (rowCombo: DigitCombination) (colCombo: DigitCombination) (lookup: CellFinder) direction =
+let lookupFishCells (rowCombo: Combination<Digit>) (colCombo: Combination<Digit>) (lookup: CellFinder) direction =
     let inside =
         List.allPairs rowCombo.inside colCombo.inside
         |> List.map (fun (r, c) -> position r c)
@@ -21,10 +21,10 @@ let lookupFishCells (rowCombo: DigitCombination) (colCombo: DigitCombination) (l
         |> List.map (fun (r, c) -> position r c)
         |> List.map lookup
 
-    { CellCombination.inside = inside
+    { inside = inside
       outside = outside }
 
-let lookupFishAffected (rowCombo: DigitCombination) (colCombo: DigitCombination) (lookup: CellFinder) direction =
+let lookupFishAffected (rowCombo: Combination<Digit>) (colCombo: Combination<Digit>) (lookup: CellFinder) direction =
     match direction with
     | RowFish -> List.allPairs rowCombo.outside colCombo.inside
     | ColFish -> List.allPairs rowCombo.inside colCombo.outside
@@ -86,7 +86,7 @@ let isValidFish positions rows cols =
     && allArePresent positions cols (fun p -> p.col)
     && allPositionsLinked positions
 
-let fishRuleForCombo (rowCombo: DigitCombination) (colCombo: DigitCombination) direction (lookup: CellFinder) =
+let fishRuleForCombo (rowCombo: Combination<Digit>) (colCombo: Combination<Digit>) direction (lookup: CellFinder) =
     let combo =
         lookupFishCells rowCombo colCombo lookup direction
 
