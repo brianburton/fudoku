@@ -192,6 +192,12 @@ let allNeighbors p =
     let b = boxNeighbors p
     List.concat [ r; c; b ] |> List.distinct
 
+let commonNeighbors p1 p2 =
+    let n1 = Set.ofList (allNeighbors p1)
+    let n2 = Set.ofList (allNeighbors p2)
+    Set.intersect n1 n2
+    |> Set.toList
+
 let solvedCell p d = { position = p; value = Answer d }
 
 let unsolvedCell p ds = { position = p; value = Pencils ds }

@@ -1,5 +1,7 @@
 module Fudoku.Utils
 
+open System.Linq
+
 let memoize fn =
     let cache =
         System.Collections.Generic.Dictionary<_, _>()
@@ -36,3 +38,9 @@ let findAndRemove (list: 'a list) (condition: 'a -> bool) =
     | [] -> None
     | [single]  -> Some(single, [])
     | head :: _ -> Some(head, List.except [head] list)
+
+let intersectLists (xs:'a seq) (ys: 'a seq) = xs.Intersect(ys) |> List.ofSeq
+
+let setsOverlap (a:Set<'a>) (b:Set<'a>) =
+    let common = Set.intersect a b
+    (Set.count common) > 0
