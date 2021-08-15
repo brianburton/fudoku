@@ -215,46 +215,43 @@ module EvenPath =
             allNeighbors pos
             |> List.filter (setContainsElement positionSet)
 
-        let rec looper current neighbors (path: Position list) jumps =
-            seq {
-                for next in neighbors do
-                    if next = from then
-                        yield path
-                    elif Set.contains (current, next) jumps then
-                        let nextNeighbors = neighborsOf next
-                        let nextPath = next :: path
+        let rec pathsFor (current: Position) (jumps: Set<Position * Position>) (first: bool) : Position list list =
+            let jumper neighbor =
+                let nextJumps =
+                    jumps
+                    |> Set.remove (current, neighbor)
+                    |> Set.remove (neighbor, current)
 
-                        let nextJumps =
-                            jumps
-                            |> Set.remove (current, next)
-                            |> Set.remove (next, current)
+                pathsFor neighbor nextJumps false
 
-                        yield! looper next nextNeighbors nextPath nextJumps
-            }
+            let collector neighbor =
+                match neighbor with
+                | n when n = from -> if first then [] else [ [] ]
+                | n when not (Set.contains (current, n) jumps) -> []
+                | n -> jumper n
 
-        let solutions =
-            seq {
-                for start in neighborsOf from do
-                    let startNeighbors = neighborsOf start |> List.except [ from ]
-                    yield! looper start startNeighbors [ start ] validJumps
-            }
+            neighborsOf current
+            |> List.collect collector
+            |> List.map (fun path -> current :: path)
 
-        solutions
-        |> Seq.tryFind (fun path -> path.Length > 0 && path.Length % 2 = 0)
-        |> Option.map (fun _ ->  from)
+        let solve start =
+            let startJumps = validJumps |> Set.remove (start, from)
+            pathsFor start startJumps true
+
+        let isEvenPath (path: Position list) : bool = path.Length > 2 && path.Length % 2 = 0
+
+        neighborsOf from
+        |> List.collect solve
+        |> List.tryFind isEvenPath
+        |> Option.map (fun _ -> from)
 
     let solveForDigit digit positionSet =
         let positionList = positionSet |> Set.toList
         let jumpSet = allPossibleJumps positionList positionSet
 
-        let solutions =
-            seq {
-                for p in positionList do
-                    solveForPosition p positionSet jumpSet
-            }
-
-        solutions
-        |> Seq.tryFind Option.isSome
+        positionList
+        |> List.map (fun p -> solveForPosition p positionSet jumpSet)
+        |> List.tryFind Option.isSome
         |> Option.bind id
         |> Option.map (fun p -> p, RemovePencils(Set.singleton digit))
         |> Option.toList

@@ -7,7 +7,8 @@ type SolutionStep = { rule: string; puzzle: Puzzle }
 let AllRules =
     [ FixPencils.rule
       SingleDigit.rule
-      SingleCell.rule ]
+      SingleCell.rule
+      EvenPath.rule ]
     @ Rectangle.uniqueRectangleRules
     @ Fish.XWingRules
     @ Fish.SwordfishRules
