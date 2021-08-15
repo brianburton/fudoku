@@ -9,6 +9,7 @@ type RuleResultChange =
     | Solved of Digit
     | RemovePencils of Set<Digit>
     | RetainPencils of Set<Digit>
+    | AddPencils of Set<Digit>
 
 type RuleResult =
     { rule: string
@@ -47,12 +48,14 @@ let applyRuleResults results puzzle =
     let remove p ds pz = updatePencils p ds pz Set.difference
 
     let retain p ds pz = updatePencils p ds pz Set.intersect
+    let add p ds pz = updatePencils p ds pz Set.union
 
     let applyResult pz (p, result) =
         match result with
         | Solved d -> solve p d pz
         | RemovePencils ds -> remove p ds pz
         | RetainPencils ds -> retain p ds pz
+        | AddPencils ds -> add p ds pz
 
     let applied = List.fold applyResult puzzle results
 
