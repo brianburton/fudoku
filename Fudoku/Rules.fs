@@ -213,9 +213,10 @@ module EvenPath =
     let solveForPosition (from: Position) (positionSet: Set<Position>) (validJumps: Set<Position * Position>) : Position option =
         let neighborsOf pos =
             allNeighbors pos
-            |> List.filter (setContainsElement positionSet)
+            |> Seq.ofList
+            |> Seq.filter (setContainsElement positionSet)
 
-        let rec pathsFor (current: Position) (jumps: Set<Position * Position>) (first: bool) : Position list list =
+        let rec pathsFor (current: Position) (jumps: Set<Position * Position>) (first: bool) : Position seq seq =
             let jumper neighbor =
                 let nextJumps =
                     jumps
@@ -226,23 +227,26 @@ module EvenPath =
 
             let collector neighbor =
                 match neighbor with
-                | n when n = from -> if first then [] else [ [] ]
-                | n when not (Set.contains (current, n) jumps) -> []
+                | n when n = from -> if first then Seq.empty else Seq.singleton Seq.empty
+                | n when not (Set.contains (current, n) jumps) -> Seq.empty
                 | n -> jumper n
 
             neighborsOf current
-            |> List.collect collector
-            |> List.map (fun path -> current :: path)
+            |> Seq.collect collector
+            |> Seq.map (fun path -> Seq.append path [ current ])
 
         let solve start =
             let startJumps = validJumps |> Set.remove (start, from)
             pathsFor start startJumps true
 
-        let isEvenPath (path: Position list) : bool = path.Length > 2 && path.Length % 2 = 0
+        let isEvenPath (path: Position seq) : bool =
+            let count = Seq.length path
+            if count > 0 then printf $"{from} -> %A{path}\n"
+            count > 2 && count % 2 = 0
 
         neighborsOf from
-        |> List.collect solve
-        |> List.tryFind isEvenPath
+        |> Seq.collect solve
+        |> Seq.tryFind isEvenPath
         |> Option.map (fun _ -> from)
 
     let solveForDigit digit positionSet =
@@ -250,8 +254,9 @@ module EvenPath =
         let jumpSet = allPossibleJumps positionList positionSet
 
         positionList
-        |> List.map (fun p -> solveForPosition p positionSet jumpSet)
-        |> List.tryFind Option.isSome
+        |> Seq.ofList
+        |> Seq.map (fun p -> solveForPosition p positionSet jumpSet)
+        |> Seq.tryFind Option.isSome
         |> Option.bind id
         |> Option.map (fun p -> p, RemovePencils(Set.singleton digit))
         |> Option.toList
