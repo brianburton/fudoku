@@ -232,14 +232,14 @@ module EvenPath =
                         yield! looper next nextNeighbors nextPath nextJumps
             }
 
-        let solve  =
+        let solutions =
             seq {
                 for start in neighborsOf from do
                     let startNeighbors = neighborsOf start |> List.except [ from ]
                     yield! looper start startNeighbors [ start ] validJumps
             }
 
-        solve
+        solutions
         |> Seq.tryFind (fun path -> path.Length > 0 && path.Length % 2 = 0)
         |> Option.map (fun _ ->  from)
 
@@ -247,9 +247,14 @@ module EvenPath =
         let positionList = positionSet |> Set.toList
         let jumpSet = allPossibleJumps positionList positionSet
 
-        positionList
-        |> List.map (fun p -> solveForPosition p positionSet jumpSet)
-        |> List.tryFind Option.isSome
+        let solutions =
+            seq {
+                for p in positionList do
+                    solveForPosition p positionSet jumpSet
+            }
+
+        solutions
+        |> Seq.tryFind Option.isSome
         |> Option.bind id
         |> Option.map (fun p -> p, RemovePencils(Set.singleton digit))
         |> Option.toList
@@ -259,8 +264,8 @@ module EvenPath =
 
         let changes =
             SetMap.keys digitMap
-            |> List.map (fun digit -> solveForDigit digit (SetMap.get digit digitMap))
-            |> List.tryFind (fun changes -> not (List.isEmpty changes))
+            |> Seq.map (fun digit -> solveForDigit digit (SetMap.get digit digitMap))
+            |> Seq.tryFind (fun changes -> not (List.isEmpty changes))
             |> Option.defaultValue []
 
         { rule = "digit-chain"; changes = changes }
