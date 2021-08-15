@@ -4,6 +4,7 @@ open NUnit.Framework
 open Fudoku.Tests.Common
 open Fudoku.Domain
 open Fudoku.Puzzle
+open Fudoku.Utils
 
 [<SetUp>]
 let Setup () = ()
@@ -139,3 +140,40 @@ let cellsLinkedByDigitsTest () =
               (unsolvedCellRC Four Eight [ Three; Four ]) ]
             (Set.ofList [ One; Two; Three; Four ])
     )
+
+[<Test>]
+let setMaps () =
+    let m =
+        SetMap.empty
+        |> SetMap.add One Two
+        |> SetMap.add One Three
+        |> SetMap.add Two Four
+
+    Assert.AreEqual((Set.ofList [ Two; Three ]), (SetMap.get One m))
+    Assert.AreEqual((Set.ofList [ Four ]), (SetMap.get Two m))
+    Assert.AreEqual((Set.empty), (SetMap.get Three m))
+
+    let m2 = SetMap.remove One Two m
+    Assert.AreEqual((Set.ofList [ Three ]), (SetMap.get One m2))
+    Assert.AreEqual((Set.ofList [ Four ]), (SetMap.get Two m2))
+
+    let m3 = SetMap.remove One Two m2
+    Assert.AreEqual((Set.ofList [ Three ]), (SetMap.get One m3))
+    Assert.AreEqual((Set.ofList [ Four ]), (SetMap.get Two m3))
+
+    let m4 = SetMap.remove One Three m3
+    Assert.AreEqual(Set.empty, (SetMap.get One m4))
+    Assert.AreEqual((Set.ofList [ Four ]), (SetMap.get Two m4))
+
+    let splitter x = (String.length x,x)
+
+    let x = ["a";"ab";"abc";"cd";"efg"] |> List.fold (SetMap.folder splitter) SetMap.empty
+    Assert.AreEqual(Set.ofList ["ab";"cd"], SetMap.get 2 x)
+
+    let y = ["a";"ab";"abc";"cd";"efg"] |> SetMap.ofList splitter
+    Assert.AreEqual(Set.ofList ["ab";"cd"], SetMap.get 2 y)
+
+    let z = ["a";"ab";"abc";"cd";"efg"]
+            |> List.map splitter
+            |> SetMap.ofPairs
+    Assert.AreEqual(Set.ofList ["abc";"efg"], SetMap.get 3 z)

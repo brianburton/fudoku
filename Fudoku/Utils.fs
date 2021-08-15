@@ -36,11 +36,55 @@ let findAndRemove (list: 'a list) (condition: 'a -> bool) =
 
     match found with
     | [] -> None
-    | [single]  -> Some(single, [])
-    | head :: _ -> Some(head, List.except [head] list)
+    | [ single ] -> Some(single, [])
+    | head :: _ -> Some(head, List.except [ head ] list)
 
-let intersectLists (xs:'a seq) (ys: 'a seq) = xs.Intersect(ys) |> List.ofSeq
+let intersectLists (xs: 'a seq) (ys: 'a seq) = xs.Intersect(ys) |> List.ofSeq
 
-let setsOverlap (a:Set<'a>) (b:Set<'a>) =
+let setsOverlap (a: Set<'a>) (b: Set<'a>) =
     let common = Set.intersect a b
     (Set.count common) > 0
+
+let setContainsElement set =
+    fun e -> Set.contains e set
+
+module SetMap =
+    let empty = Map.empty
+
+    let add key value setMap =
+        let adder vs =
+            match vs with
+            | Some set -> Set.add value set
+            | None -> Set.singleton value
+            |> Some
+
+        setMap |> Map.change key adder
+
+    let remove key value setMap =
+        let remover vs =
+            vs
+            |> Option.map (Set.remove value)
+            |> Option.filter (fun set -> not set.IsEmpty)
+
+        setMap |> Map.change key remover
+
+    let get key setMap =
+        Map.tryFind key setMap
+        |> Option.defaultValue Set.empty
+
+    let contains key value setMap = get key setMap |> Set.contains value
+
+    let keys setMap = setMap |> Map.toList |> List.map fst
+
+    let folder splitter =
+        fun setMap raw ->
+            let key,value = splitter raw
+            setMap |> add key value
+
+    let ofList splitter list =
+        list |> List.fold (folder splitter) empty
+
+    let ofPairs list =
+        let folder map (k,v) = add k v map
+        list |> List.fold folder empty
+

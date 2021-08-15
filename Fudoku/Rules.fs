@@ -2,6 +2,7 @@ namespace Fudoku
 
 open Domain
 open Puzzle
+open Utils
 
 module SingleDigit =
     let private singlePencilRule lookup group =
@@ -197,3 +198,105 @@ module SingleBox =
         List.allPairs allMappers SingleSegmentDigitTriples
         |> List.map (fun (mapper, combo) -> combinationMapper mapper combo)
         |> List.map (fun combo -> singleBoxRule combo)
+
+module EvenPath =
+    let cellPencilList cell =
+        cellPencils cell
+        |> Set.toList
+        |> List.map (fun d -> (d, cell.position))
+
+    let createDigitMap (lookup: CellFinder) : Map<Digit, Set<Position>> =
+        AllPositions
+        |> List.map lookup
+        |> List.collect cellPencilList
+        |> SetMap.ofPairs
+
+    let jumpsFrom (source: Position) (positions: Set<Position>) : Set<Position * Position> =
+        let jumpsInGroup group =
+            let active =
+                Set.ofList group |> Set.intersect positions
+
+            if Set.count active = 1 then
+                [ (source, Set.minElement active) ]
+            else
+                []
+
+        [ (rowNeighbors source)
+          (colNeighbors source)
+          (boxNeighbors source) ]
+        |> List.collect jumpsInGroup
+        |> Set.ofList
+
+    let allPossibleJumps (positionList: List<Position>) (positionSet: Set<Position>) =
+        positionList
+        |> List.map (fun p -> jumpsFrom p positionSet)
+        |> List.fold (fun ps p -> Set.union p ps) Set.empty
+
+    let solveForPosition (from: Position) (positionSet: Set<Position>) (validJumps: Set<Position * Position>) : Position list =
+        let neighborsOf pos =
+            allNeighbors pos
+            |> List.filter (setContainsElement positionSet)
+
+        let finishPath (path: Position list) =
+            if (List.length path) % 2 = 0 then
+                path
+            else
+                []
+
+        let rec loop current neighbors (path: Position list) jumps first =
+            if current = from && not first then
+                finishPath (current :: path)
+            else
+                match neighbors with
+                | next :: remaining ->
+                    if not (Set.contains (current, next) jumps) then
+                        loop current remaining path jumps false
+                    else
+                        let nextNeighbors = neighborsOf next
+                        let nextPath = current :: path
+
+                        let nextJumps =
+                            jumps
+                            |> Set.remove (current, next)
+                            |> Set.remove (next, current)
+
+                        loop next nextNeighbors nextPath nextJumps false
+                | _ -> []
+
+        let neighbors = neighborsOf from
+        loop from neighbors [] validJumps true
+
+    let solveForDigit digit positionSet =
+        let positionList = positionSet |> Set.toList
+
+        let jumpSet =
+            allPossibleJumps positionList positionSet
+
+        let rec loop (remaining: Position list) =
+            match remaining with
+            | [] -> []
+            | head :: tail ->
+                let path =
+                    solveForPosition head positionSet jumpSet
+
+                match path with
+                | [] -> loop tail
+                | _ -> path
+
+        let path = loop positionList
+
+        match path with
+        | [] -> []
+        | head :: _ -> [ head, RemovePencils(Set.singleton digit) ]
+
+    let rule lookup =
+        let digitMap = createDigitMap lookup
+
+        let changes =
+            SetMap.keys digitMap
+            |> List.map (fun digit -> solveForDigit digit (SetMap.get digit digitMap))
+            |> List.tryFind (fun changes -> not (List.isEmpty changes))
+            |> Option.defaultValue []
+
+        { rule = "digit-chain"
+          changes = changes }
