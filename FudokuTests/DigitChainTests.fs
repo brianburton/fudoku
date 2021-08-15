@@ -3,7 +3,6 @@ module Fudoku.Tests.DigitChain
 open NUnit.Framework
 open Fudoku.Domain
 open Fudoku.Puzzle
-open Fudoku.PuzzleIO
 open Fudoku.Tests.Common
 
 [<Test>]
@@ -28,4 +27,4 @@ let ``works with extra cells in group`` () =
         |> bulkAddPencils (posList chain) [ 1; 5 ]
 
     let result = Fudoku.EvenPath.rule (cellFinder start)
-    Assert.AreEqual(result.changes, [ ((pos (3, 3)), RemovePencils(digSet [ 4 ])) ])
+    Assert.AreEqual([ ((pos (3, 3)), RemovePencils(digSet [ 1 ])) ], result.changes)

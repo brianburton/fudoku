@@ -215,35 +215,33 @@ module EvenPath =
             allNeighbors pos
             |> List.filter (setContainsElement positionSet)
 
-        let rec loop current neighbors (path: Position list) jumps =
-            match neighbors with
-            | [] -> None
-            | next :: remaining ->
-                if next = from && path.Length % 2 = 0 then
-                    Some from
-                elif next = from then
-                    loop current remaining path jumps
-                elif not (Set.contains (current, next) jumps) then
-                    loop current remaining path jumps
-                else
-                    let nextNeighbors = neighborsOf next
-                    let nextPath = next :: path
+        let rec looper current neighbors (path: Position list) jumps =
+            seq {
+                for next in neighbors do
+                    if next = from then
+                        yield path
+                    elif Set.contains (current, next) jumps then
+                        let nextNeighbors = neighborsOf next
+                        let nextPath = next :: path
 
-                    let nextJumps =
-                        jumps
-                        |> Set.remove (current, next)
-                        |> Set.remove (next, current)
+                        let nextJumps =
+                            jumps
+                            |> Set.remove (current, next)
+                            |> Set.remove (next, current)
 
-                    loop next nextNeighbors nextPath nextJumps
+                        yield! looper next nextNeighbors nextPath nextJumps
+            }
 
-        let solve start =
-            let startNeighbors = neighborsOf start |> List.except [ from ]
-            loop start startNeighbors [ start ] validJumps
+        let solve  =
+            seq {
+                for start in neighborsOf from do
+                    let startNeighbors = neighborsOf start |> List.except [ from ]
+                    yield! looper start startNeighbors [ start ] validJumps
+            }
 
-        neighborsOf from
-        |> List.map solve
-        |> List.tryFind Option.isSome
-        |> Option.bind id
+        solve
+        |> Seq.tryFind (fun path -> path.Length > 0 && path.Length % 2 = 0)
+        |> Option.map (fun _ ->  from)
 
     let solveForDigit digit positionSet =
         let positionList = positionSet |> Set.toList
