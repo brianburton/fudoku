@@ -13,8 +13,7 @@ module SingleDigit =
             |> List.filter (fun (_, ds) -> ds.Count = 1)
             |> List.map (fun (c, ds) -> c.position, Solved ds.MinimumElement)
 
-        { rule = "single-pencil"
-          changes = changes }
+        { rule = "single-pencil"; changes = changes }
 
     let rule lookup = singlePencilRule lookup AllPositions
 
@@ -29,8 +28,7 @@ module FixPencils =
                 |> List.map cellDigit
                 |> List.fold Set.union Set.empty
 
-            let pencilsToRemoveFromCell c =
-                Set.intersect digitsInGroup (cellPencils c)
+            let pencilsToRemoveFromCell c = Set.intersect digitsInGroup (cellPencils c)
 
             cellsInGroup
             |> List.map (fun c -> c, pencilsToRemoveFromCell c)
@@ -39,8 +37,7 @@ module FixPencils =
 
         let changes = List.collect solveGroup AllGroups
 
-        { rule = "fix-pencils"
-          changes = changes }
+        { rule = "fix-pencils"; changes = changes }
 
     let rule lookup = fixPencilsRule lookup
 
@@ -63,8 +60,7 @@ module SingleCell =
             List.allPairs AllGroups DigitSingles
             |> List.collect (fun (group, combo) -> singleCellPencil group combo lookup)
 
-        { rule = "single-cell"
-          changes = changes }
+        { rule = "single-cell"; changes = changes }
 
 module Tuple =
 
@@ -83,20 +79,16 @@ module Tuple =
             let tryRemainingCells =
                 let currentDigits = (cellPencils current)
 
-                let availableDigits =
-                    Set.intersect currentDigits remainingDigits
+                let availableDigits = Set.intersect currentDigits remainingDigits
 
                 availableDigits
                 |> Set.toList
                 |> List.collect (fun d -> (cellsWithPencil d remainingCells))
                 |> List.exists (fun (d, c) -> tryNextCell d c)
 
-            if remainingCells.IsEmpty && remainingDigits.IsEmpty then
-                true
-            elif remainingCells.IsEmpty || remainingDigits.IsEmpty then
-                false
-            else
-                tryRemainingCells
+            if remainingCells.IsEmpty && remainingDigits.IsEmpty then true
+            elif remainingCells.IsEmpty || remainingDigits.IsEmpty then false
+            else tryRemainingCells
 
         List.exists (solveForCell cells digits) cells
 
@@ -117,8 +109,7 @@ module Tuple =
             else
                 List.empty
 
-        { rule = $"hidden-pencils-%d{len}"
-          changes = changes }
+        { rule = $"hidden-pencils-%d{len}"; changes = changes }
 
     let nakedPencils (group: Position list) (combo: Combination<Digit>) (lookup: CellFinder) =
         let cells = lookupCellCombination group combo lookup
@@ -138,8 +129,7 @@ module Tuple =
             else
                 List.empty
 
-        { rule = $"naked-pencils-%d{len}"
-          changes = changes }
+        { rule = $"naked-pencils-%d{len}"; changes = changes }
 
     let hiddenRules =
         List.allPairs AllGroups MultiDigitCombinations
@@ -158,8 +148,7 @@ module SingleBox =
         let insidePencils = groupPencils insideCells
         let outsidePencils = groupPencils outsideCells
 
-        let uniquePencils =
-            Set.difference insidePencils outsidePencils
+        let uniquePencils = Set.difference insidePencils outsidePencils
 
         let isAllInBox = uniquePencils.Count > 0
 
@@ -175,14 +164,9 @@ module SingleBox =
             neighbors
             |> List.map (fun c -> c.position, RemovePencils uniquePencils)
 
-        let changes =
-            if isAllInBox then
-                boxCellsToChange ()
-            else
-                List.empty
+        let changes = if isAllInBox then boxCellsToChange () else List.empty
 
-        { rule = "single-box"
-          changes = changes }
+        { rule = "single-box"; changes = changes }
 
     let rules =
         let rowMappers =
@@ -213,17 +197,11 @@ module EvenPath =
 
     let jumpsFrom (source: Position) (positions: Set<Position>) : Set<Position * Position> =
         let jumpsInGroup group =
-            let active =
-                Set.ofList group |> Set.intersect positions
+            let active = Set.ofList group |> Set.intersect positions
 
-            if Set.count active = 1 then
-                [ (source, Set.minElement active) ]
-            else
-                []
+            if Set.count active = 1 then [ (source, Set.minElement active) ] else []
 
-        [ (rowNeighbors source)
-          (colNeighbors source)
-          (boxNeighbors source) ]
+        [ (rowNeighbors source); (colNeighbors source); (boxNeighbors source) ]
         |> List.collect jumpsInGroup
         |> Set.ofList
 
@@ -232,25 +210,22 @@ module EvenPath =
         |> List.map (fun p -> jumpsFrom p positionSet)
         |> List.fold (fun ps p -> Set.union p ps) Set.empty
 
-    let solveForPosition (from: Position) (positionSet: Set<Position>) (validJumps: Set<Position * Position>) : Position list =
+    let solveForPosition (from: Position) (positionSet: Set<Position>) (validJumps: Set<Position * Position>) : Position option =
         let neighborsOf pos =
             allNeighbors pos
             |> List.filter (setContainsElement positionSet)
 
-        let finishPath (path: Position list) =
-            if (List.length path) % 2 = 0 then
-                path
-            else
-                []
+        let finishPath (path: Position list) = if (List.length path) % 2 = 0 then Some from else None
 
-        let rec loop current neighbors (path: Position list) jumps first =
-            if current = from && not first then
+        let rec loop current neighbors (path: Position list) jumps =
+            if current = from && path.Length > 0 then
                 finishPath (current :: path)
             else
                 match neighbors with
+                | [] -> None
                 | next :: remaining ->
                     if not (Set.contains (current, next) jumps) then
-                        loop current remaining path jumps false
+                        loop current remaining path jumps
                     else
                         let nextNeighbors = neighborsOf next
                         let nextPath = current :: path
@@ -260,34 +235,21 @@ module EvenPath =
                             |> Set.remove (current, next)
                             |> Set.remove (next, current)
 
-                        loop next nextNeighbors nextPath nextJumps false
-                | _ -> []
+                        loop next nextNeighbors nextPath nextJumps
 
         let neighbors = neighborsOf from
-        loop from neighbors [] validJumps true
+        loop from neighbors [] validJumps
 
     let solveForDigit digit positionSet =
         let positionList = positionSet |> Set.toList
+        let jumpSet = allPossibleJumps positionList positionSet
 
-        let jumpSet =
-            allPossibleJumps positionList positionSet
-
-        let rec loop (remaining: Position list) =
-            match remaining with
-            | [] -> []
-            | head :: tail ->
-                let path =
-                    solveForPosition head positionSet jumpSet
-
-                match path with
-                | [] -> loop tail
-                | _ -> path
-
-        let path = loop positionList
-
-        match path with
-        | [] -> []
-        | head :: _ -> [ head, RemovePencils(Set.singleton digit) ]
+        positionList
+        |> List.map (fun p -> solveForPosition p positionSet jumpSet)
+        |> List.tryFind Option.isSome
+        |> Option.bind id
+        |> Option.map (fun p -> p, RemovePencils(Set.singleton digit))
+        |> Option.toList
 
     let rule lookup =
         let digitMap = createDigitMap lookup
@@ -298,5 +260,4 @@ module EvenPath =
             |> List.tryFind (fun changes -> not (List.isEmpty changes))
             |> Option.defaultValue []
 
-        { rule = "digit-chain"
-          changes = changes }
+        { rule = "digit-chain"; changes = changes }

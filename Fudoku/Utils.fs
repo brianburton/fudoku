@@ -3,8 +3,7 @@ module Fudoku.Utils
 open System.Linq
 
 let memoize fn =
-    let cache =
-        System.Collections.Generic.Dictionary<_, _>()
+    let cache = System.Collections.Generic.Dictionary<_, _>()
 
     (fun x ->
         match cache.TryGetValue x with
@@ -45,8 +44,7 @@ let setsOverlap (a: Set<'a>) (b: Set<'a>) =
     let common = Set.intersect a b
     (Set.count common) > 0
 
-let setContainsElement set =
-    fun e -> Set.contains e set
+let setContainsElement set = fun e -> Set.contains e set
 
 module SetMap =
     let empty = Map.empty
@@ -78,13 +76,11 @@ module SetMap =
 
     let folder splitter =
         fun setMap raw ->
-            let key,value = splitter raw
+            let key, value = splitter raw
             setMap |> add key value
 
-    let ofList splitter list =
-        list |> List.fold (folder splitter) empty
+    let ofList splitter list = list |> List.fold (folder splitter) empty
 
     let ofPairs list =
-        let folder map (k,v) = add k v map
+        let folder map (k, v) = add k v map
         list |> List.fold folder empty
-
