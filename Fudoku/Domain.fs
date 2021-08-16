@@ -43,24 +43,13 @@ type CellValue =
     | Answer of Digit
     | Pencils of Set<Digit>
 
-type Cell =
-    { position: Position
-      value: CellValue }
+type Cell = { position: Position; value: CellValue }
 
 type CellFinder = Position -> Cell
 
 type Combination<'T> = { inside: 'T list; outside: 'T list }
 
-let AllDigits =
-    [ One
-      Two
-      Three
-      Four
-      Five
-      Six
-      Seven
-      Eight
-      Nine ]
+let AllDigits = [ One; Two; Three; Four; Five; Six; Seven; Eight; Nine ]
 
 let AllDigitsSet = AllDigits |> Set.ofList
 
@@ -68,8 +57,7 @@ let comboOf digits : Combination<Digit> =
     let others = AllDigits |> List.except digits
     { inside = digits; outside = others }
 
-let private createDigitCombos len =
-    combinations len AllDigits |> List.map comboOf
+let private createDigitCombos len = combinations len AllDigits |> List.map comboOf
 
 let DigitSingles = createDigitCombos 1
 let DigitPairs = createDigitCombos 2
@@ -113,8 +101,7 @@ let combinationMapper (mapping: Digit -> Position) (combo: Combination<Digit>) :
     let posInside = combo.inside |> List.map mapping
     let posOutside = combo.outside |> List.map mapping
 
-    { inside = posInside
-      outside = posOutside }
+    { inside = posInside; outside = posOutside }
 
 let boxContaining r c =
     match (segment r, segment c) with
@@ -139,8 +126,7 @@ let col c = positions AllDigits [ c ]
 let AllCols = AllDigits |> List.map col
 
 let box d =
-    let boxPositions s1 s2 =
-        positions (segmentDigits s1) (segmentDigits s2)
+    let boxPositions s1 s2 = positions (segmentDigits s1) (segmentDigits s2)
 
     match d with
     | One -> boxPositions SegOne SegOne
@@ -160,24 +146,32 @@ let AllGroups =
                   AllCols
                   AllBoxes ]
 
-let rowNeighbors p =
-    List.filter (fun pp -> pp.col <> p.col) (row p.row)
+let rowNeighbors =
+    let impl (p: Position) = List.filter (fun pp -> pp.col <> p.col) (row p.row)
+    memoize impl
 
-let colNeighbors p =
-    List.filter (fun pp -> pp.row <> p.row) (col p.col)
+let colNeighbors =
+    let impl (p: Position) = List.filter (fun pp -> pp.row <> p.row) (col p.col)
+    memoize impl
 
-let boxNeighbors p =
-    let b = boxContaining p.row p.col
-    List.filter (fun (pp: Position) -> pp <> p) (box b)
+let boxNeighbors =
+    let impl (p: Position) =
+        boxContainingPos p
+        |> box
+        |> List.filter (fun (pp: Position) -> pp <> p)
 
-let allNeighbors p =
-    let r = rowNeighbors p
-    let c = colNeighbors p
-    let b = boxNeighbors p
-    List.concat [ r; c; b ] |> List.distinct
+    memoize impl
 
-let commonNeighbors p1 p2 =
-    intersectLists (allNeighbors p1) (allNeighbors p2)
+let allNeighbors =
+    let impl p =
+        let r = rowNeighbors p
+        let c = colNeighbors p
+        let b = boxNeighbors p
+        List.concat [ r; c; b ] |> List.distinct
+
+    memoize impl
+
+let commonNeighbors p1 p2 = intersectLists (allNeighbors p1) (allNeighbors p2)
 
 let solvedCell p d = { position = p; value = Answer d }
 
@@ -214,15 +208,14 @@ let lookupCellCombination (group: Position list) (combo: Combination<Digit>) (lo
     let insideCells = combo.inside |> List.map digitMapper
     let outsideCells = combo.outside |> List.map digitMapper
 
-    { inside = insideCells
-      outside = outsideCells }
+    { inside = insideCells; outside = outsideCells }
 
 let cellPencilList cell =
     cellPencils cell
     |> Set.toList
     |> List.map (fun d -> (d, cell.position))
 
-let createDigitMap (group:Position list) (lookup: CellFinder) : Map<Digit, Set<Position>> =
+let createDigitMap (group: Position list) (lookup: CellFinder) : Map<Digit, Set<Position>> =
     group
     |> List.map lookup
     |> List.collect cellPencilList
