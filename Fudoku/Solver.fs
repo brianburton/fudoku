@@ -11,7 +11,8 @@ let AllRules =
         @ Rectangle.uniqueRectangleRules
           @ [ DigitChain.rule ]
             @ Fish.SwordfishRules
-              @ Tuple.nakedRules @ Tuple.hiddenRules
+              @ Tuple.nakedRules
+                @ Tuple.hiddenRules @ [ BUG.rule ]
 
 let fixPencils puzzle =
     let x = applyRules (cellFinder puzzle) [ FixPencils.rule ]

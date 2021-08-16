@@ -216,3 +216,14 @@ let lookupCellCombination (group: Position list) (combo: Combination<Digit>) (lo
 
     { inside = insideCells
       outside = outsideCells }
+
+let cellPencilList cell =
+    cellPencils cell
+    |> Set.toList
+    |> List.map (fun d -> (d, cell.position))
+
+let createDigitMap (group:Position list) (lookup: CellFinder) : Map<Digit, Set<Position>> =
+    group
+    |> List.map lookup
+    |> List.collect cellPencilList
+    |> SetMap.ofPairs

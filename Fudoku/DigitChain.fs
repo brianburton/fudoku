@@ -4,17 +4,6 @@ open Domain
 open Puzzle
 open Utils
 
-let cellPencilList cell =
-    cellPencils cell
-    |> Set.toList
-    |> List.map (fun d -> (d, cell.position))
-
-let createDigitMap (lookup: CellFinder) : Map<Digit, Set<Position>> =
-    AllPositions
-    |> List.map lookup
-    |> List.collect cellPencilList
-    |> SetMap.ofPairs
-
 let jumpsFrom (source: Position) (positions: Set<Position>) : Set<Position * Position> =
     let jumpsInGroup group =
         let active = Set.ofList group |> Set.intersect positions
@@ -82,7 +71,7 @@ let solveForDigit digit positionSet =
     |> Option.toList
 
 let rule lookup =
-    let digitMap = createDigitMap lookup
+    let digitMap = createDigitMap AllPositions lookup
 
     let changes =
         SetMap.keys digitMap

@@ -72,6 +72,11 @@ module SetMap =
 
     let contains key value setMap = get key setMap |> Set.contains value
 
+    let getCount key setMap =
+        Map.tryFind key setMap
+        |> Option.map Set.count
+        |> Option.defaultValue 0
+
     let keys setMap = setMap |> Map.toList |> List.map fst
 
     let folder splitter =
