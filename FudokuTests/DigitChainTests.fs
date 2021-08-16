@@ -14,7 +14,7 @@ let ``simple chain of four`` () =
         |> bulkRemovePencils AllPositions [ 4 ]
         |> bulkAddPencils (posList chain) [ 4; 5 ]
 
-    let result = Fudoku.EvenPath.rule (cellFinder start)
+    let result = Fudoku.DigitChain.rule (cellFinder start)
     Assert.AreEqual(result.changes, [ ((pos (3, 3)), RemovePencils(digSet [ 4 ])) ])
 
 [<Test>]
@@ -26,5 +26,5 @@ let ``works with extra cells in group`` () =
         |> bulkRemovePencils AllPositions [ 1 ]
         |> bulkAddPencils (posList chain) [ 1; 5 ]
 
-    let result = Fudoku.EvenPath.rule (cellFinder start)
+    let result = Fudoku.DigitChain.rule (cellFinder start)
     Assert.AreEqual([ ((pos (3, 3)), RemovePencils(digSet [ 1 ])) ], result.changes)

@@ -12,6 +12,7 @@
         <Compile Include="Rules.fs" />
         <Compile Include="Fish.fs" />
         <Compile Include="Rectangle.fs" />
+        <Compile Include="DigitChain.fs" />
         <Compile Include="Solver.fs" />
         <Compile Include="PuzzleIO.fs" />
         <Compile Include="Program.fs" />
