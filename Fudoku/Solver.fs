@@ -5,45 +5,36 @@ open Puzzle
 type SolutionStep = { rule: string; puzzle: Puzzle }
 
 let AllRules =
-    [ FixPencils.rule
-      SingleDigit.rule
-      SingleCell.rule
-      DigitChain.rule ]
-    @ Rectangle.uniqueRectangleRules
-    @ Fish.XWingRules
-    @ Fish.SwordfishRules
+    [ FixPencils.rule; SingleDigit.rule; SingleCell.rule ]
     @ SingleBox.rules
-      @ Tuple.nakedRules @ Tuple.hiddenRules
+      @ Fish.XWingRules
+        @ Rectangle.uniqueRectangleRules
+          @ [ DigitChain.rule ]
+            @ Fish.SwordfishRules
+              @ Tuple.nakedRules @ Tuple.hiddenRules
 
 let fixPencils puzzle =
-    let x =
-        applyRules (cellFinder puzzle) [ FixPencils.rule ]
+    let x = applyRules (cellFinder puzzle) [ FixPencils.rule ]
 
     applyRuleResults x.changes puzzle
 
 let solvePuzzle puzzle =
 
     let rec loop priorSteps currentPuzzle =
-        let results =
-            applyRules (cellFinder currentPuzzle) AllRules
+        let results = applyRules (cellFinder currentPuzzle) AllRules
 
         if results.changes.Length = 0 then
             priorSteps
         else
-            let newPuzzle =
-                applyRuleResults results.changes currentPuzzle
+            let newPuzzle = applyRuleResults results.changes currentPuzzle
 
-            let thisStep =
-                List.singleton
-                    { rule = results.rule
-                      puzzle = newPuzzle }
+            let thisStep = List.singleton { rule = results.rule; puzzle = newPuzzle }
 
             let newSteps = priorSteps @ thisStep
             loop newSteps newPuzzle
 
 
-    let initialSteps =
-        List.singleton { rule = "start"; puzzle = puzzle }
+    let initialSteps = List.singleton { rule = "start"; puzzle = puzzle }
 
     let finalSteps = loop initialSteps puzzle
     let finalPuzzle = (List.last finalSteps).puzzle
