@@ -46,38 +46,40 @@ let setsOverlap (a: Set<'a>) (b: Set<'a>) =
 
 let setContainsElement set = fun e -> Set.contains e set
 
-module SetMap =
-    let empty = Map.empty
+type SetMap<'K, 'V when 'K: comparison and 'V: comparison> = SetMap of Map<'K, Set<'V>>
 
-    let add key value setMap =
+module SetMap =
+    let empty = SetMap Map.empty
+
+    let add key value (SetMap setMap) =
         let adder vs =
             match vs with
             | Some set -> Set.add value set
             | None -> Set.singleton value
             |> Some
 
-        setMap |> Map.change key adder
+        setMap |> Map.change key adder |> SetMap
 
-    let remove key value setMap =
+    let remove key value (SetMap setMap) =
         let remover vs =
             vs
             |> Option.map (Set.remove value)
             |> Option.filter (fun set -> not set.IsEmpty)
 
-        setMap |> Map.change key remover
+        setMap |> Map.change key remover |> SetMap
 
-    let get key setMap =
+    let get key (SetMap setMap) =
         Map.tryFind key setMap
         |> Option.defaultValue Set.empty
 
     let contains key value setMap = get key setMap |> Set.contains value
 
-    let getCount key setMap =
+    let getCount key (SetMap setMap) =
         Map.tryFind key setMap
         |> Option.map Set.count
         |> Option.defaultValue 0
 
-    let keys setMap = setMap |> Map.toList |> List.map fst
+    let keys (SetMap setMap) = setMap |> Map.toList |> List.map fst
 
     let folder splitter =
         fun setMap raw ->

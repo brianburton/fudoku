@@ -215,7 +215,7 @@ let cellPencilList cell =
     |> Set.toList
     |> List.map (fun d -> (d, cell.position))
 
-let createDigitMap (group: Position list) (lookup: CellFinder) : Map<Digit, Set<Position>> =
+let createDigitMap (group: Position list) (lookup: CellFinder) : SetMap<Digit, Position> =
     group
     |> List.map lookup
     |> List.collect cellPencilList
