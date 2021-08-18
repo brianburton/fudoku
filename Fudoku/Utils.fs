@@ -46,7 +46,7 @@ let setsOverlap (a: Set<'a>) (b: Set<'a>) =
 
 let setContainsElement set = fun e -> Set.contains e set
 
-type SetMap<'K, 'V when 'K: comparison and 'V: comparison> = SetMap of Map<'K, Set<'V>>
+type SetMap<'K, 'V when 'K: comparison and 'V: comparison> = private SetMap of Map<'K, Set<'V>>
 
 module SetMap =
     let empty = SetMap Map.empty
