@@ -4,31 +4,17 @@ open Domain
 open Puzzle
 open Utils
 
-type Rectangle<'T> =
-    { topLeft: 'T
-      topRight: 'T
-      bottomLeft: 'T
-      bottomRight: 'T }
+type Rectangle<'T> = { topLeft: 'T; topRight: 'T; bottomLeft: 'T; bottomRight: 'T }
 
 let rotateRectangle r =
     match r with
-    | { topLeft = tl
-        topRight = tr
-        bottomLeft = bl
-        bottomRight = br } ->
-        { topLeft = bl
-          topRight = tl
-          bottomLeft = br
-          bottomRight = tr }
+    | { topLeft = tl; topRight = tr; bottomLeft = bl; bottomRight = br } -> { topLeft = bl; topRight = tl; bottomLeft = br; bottomRight = tr }
 
 let twoBoxRectangles =
     let cornersToRect corners =
         match corners with
-        | tl :: tr :: bl :: [ br ] ->
-            { topLeft = tl
-              topRight = tr
-              bottomLeft = bl
-              bottomRight = br }
+        | tl :: tr :: bl :: [ br ] -> { topLeft = tl; topRight = tr; bottomLeft = bl; bottomRight = br }
+        | _ -> invalidArg "corners" $"should have 4 values but had {corners.Length}"
 
     let isTwoBoxer rect =
         Set.empty
@@ -45,20 +31,13 @@ let twoBoxRectangles =
     |> List.map cornersToRect
     |> List.filter isTwoBoxer
 
-type CellSummary =
-    { cellPos: Position
-      cellPencils: Set<Digit> }
+type CellSummary = { cellPos: Position; cellPencils: Set<Digit> }
 
-let summarizeCell lookup pos =
-    { cellPos = pos
-      cellPencils = cellPencils (lookup pos) }
+let summarizeCell lookup pos = { cellPos = pos; cellPencils = cellPencils (lookup pos) }
 
 let summarizeRectangle (lookup: CellFinder) (posRect: Rectangle<Position>) =
     match posRect with
-    | { topLeft = tl
-        topRight = tr
-        bottomLeft = bl
-        bottomRight = br } ->
+    | { topLeft = tl; topRight = tr; bottomLeft = bl; bottomRight = br } ->
         { topLeft = summarizeCell lookup bl
           topRight = summarizeCell lookup tl
           bottomLeft = summarizeCell lookup br
@@ -117,10 +96,7 @@ let solveUniqueRectangle lookup rectangle =
 
 
     match rectangle with
-    | { topLeft = a
-        topRight = b
-        bottomLeft = c
-        bottomRight = d } ->
+    | { topLeft = a; topRight = b; bottomLeft = c; bottomRight = d } ->
         if a.cellPencils.Count <> 2
            || b.cellPencils <> a.cellPencils then
             None
@@ -142,12 +118,8 @@ let solveUniqueRectangleRotations rectangle (lookup: CellFinder) =
 
 let singleUniqueRectangleRule rectangle (lookup: CellFinder) =
     let summarized = summarizeRectangle lookup rectangle
-
-    let changes =
-        solveUniqueRectangleRotations summarized lookup
-
-    { rule = "unique-rectangle"
-      changes = Option.defaultValue List.empty changes }
+    let changes = solveUniqueRectangleRotations summarized lookup
+    { rule = "unique-rectangle"; changes = Option.defaultValue List.empty changes }
 
 let uniqueRectangleRules =
     twoBoxRectangles
