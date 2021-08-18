@@ -1,12 +1,11 @@
 ﻿module Fudoku.App
 
-open System.IO
 open Fudoku.Domain
 open Fudoku.Solver
 open Fudoku.Puzzle
 open Fudoku.PuzzleIO
 
-let printResults puzzle (steps: SolutionStep list) =
+let printResult (prev:Puzzle) (step: SolutionStep) =
     let printPencilDiffs before after =
         let extra =
             if Set.isProperSuperset before after then
@@ -35,19 +34,11 @@ let printResults puzzle (steps: SolutionStep list) =
         | diff :: tail -> printDiff diff tail
         | _ -> ()
 
-    let rec printSteps prev step tail =
-        let diffs = diffPuzzles prev step.puzzle
-        printfn $"Rule: %s{step.rule}"
-        printDiffs diffs
-        printfn $"%s{puzzleToString step.puzzle}"
-
-        match tail with
-        | nextStep :: nextTail -> printSteps step.puzzle nextStep nextTail
-        | _ -> ()
-
-    match steps with
-    | step :: tail -> printSteps puzzle step tail
-    | _ -> ()
+    let diffs = diffPuzzles prev step.puzzle
+    printfn $"Rule: %s{step.rule}"
+    printDiffs diffs
+    printfn $"%s{puzzleToString step.puzzle}"
+    step.puzzle
 
 exception BadArguments of string
 
@@ -65,8 +56,9 @@ let main args =
     match puzzle with
     | Ok barePuzzle ->
         let initializedPuzzle = fixPencils barePuzzle
-        let _, steps = solvePuzzle initializedPuzzle
-        printResults initializedPuzzle steps
+        solvePuzzle initializedPuzzle
+        |> Seq.fold printResult initializedPuzzle
+        |> ignore
     | Error e -> printfn $"error: %s{e}"
 
     0 // return an integer exit code

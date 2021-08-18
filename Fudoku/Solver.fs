@@ -19,24 +19,16 @@ let fixPencils puzzle =
 
     applyRuleResults x.changes puzzle
 
+let private findStepChanges currentPuzzle =
+    let results = applyRules (cellFinder currentPuzzle) AllRules
+
+    match results.changes with
+    | [] -> { rule = ""; puzzle = currentPuzzle }
+    | changes ->
+        let newPuzzle = applyRuleResults changes currentPuzzle
+        { rule = results.rule; puzzle = newPuzzle }
+
 let solvePuzzle puzzle =
-
-    let rec loop priorSteps currentPuzzle =
-        let results = applyRules (cellFinder currentPuzzle) AllRules
-
-        if results.changes.Length = 0 then
-            priorSteps
-        else
-            let newPuzzle = applyRuleResults results.changes currentPuzzle
-
-            let thisStep = List.singleton { rule = results.rule; puzzle = newPuzzle }
-
-            let newSteps = priorSteps @ thisStep
-            loop newSteps newPuzzle
-
-
-    let initialSteps = List.singleton { rule = "start"; puzzle = puzzle }
-
-    let finalSteps = loop initialSteps puzzle
-    let finalPuzzle = (List.last finalSteps).puzzle
-    (finalPuzzle, finalSteps)
+    seq { for i in 1 .. 1000 -> i }
+    |> Seq.scan (fun step _ -> findStepChanges step.puzzle) { rule = "start"; puzzle = puzzle }
+    |> Seq.takeWhile (fun step -> step.rule.Length > 0)
