@@ -64,7 +64,7 @@ let solveUniqueRectangle lookup rectangle =
             |> List.map lookup
             |> List.filter (fun x -> Set.isSuperset (cellPencils x) extraDigits)
             |> List.map (fun x -> (x.position, RemovePencils extraDigits))
-            |> Some
+            |> listToOption
 
     let twoCellsActingAsPair pencils c d =
         let extraDigits =
@@ -87,13 +87,12 @@ let solveUniqueRectangle lookup rectangle =
                     |> List.map lookup
                     |> List.filter (fun x -> (setsOverlap (cellPencils x) extraDigits))
                     |> List.map (fun x -> (x.position, RemovePencils extraDigits)))
-            |> Some
+            |> listToOption
 
     let solve a c d =
         singleCellWithExtraPencils a.cellPencils c d
         |> Option.orElseWith (fun () -> twoCellsSharingOneExtraDigit a.cellPencils c d)
         |> Option.orElseWith (fun () -> twoCellsActingAsPair a.cellPencils c d)
-
 
     match rectangle with
     | { topLeft = a; topRight = b; bottomLeft = c; bottomRight = d } ->
@@ -103,24 +102,41 @@ let solveUniqueRectangle lookup rectangle =
         else
             solve a c d
 
-let solveUniqueRectangleRotations rectangle (lookup: CellFinder) =
-    let rec rotateAndSolve count rectangle =
-        if count = 0 then
-            None
-        else
-            let solution = solveUniqueRectangle lookup rectangle
+let allCornersInSet (positions: Set<Position>) (rect: Rectangle<Position>) =
+    Set.contains rect.topLeft positions
+    && Set.contains rect.topRight positions
+    && Set.contains rect.bottomLeft positions
+    && Set.contains rect.bottomRight positions
 
-            match solution with
-            | None -> rotateAndSolve (count - 1) (rotateRectangle rectangle)
-            | Some _ -> solution
+let rotationsOf rect =
+    seq {
+        let mutable r = rect
+        for _ in 1 .. 4 do
+            yield r
+            r <- rotateRectangle r
+    }
 
-    rotateAndSolve 4 rectangle
+let uniqueRectangleRule (lookup: CellFinder) : RuleResult =
+    let possiblePositions =
+        AllPositions
+        |> List.map lookup
+        |> List.filter (fun cell -> (Set.count (cellPencils cell)) >= 2)
+        |> List.map (fun cell -> cell.position)
+        |> Set.ofList
 
-let singleUniqueRectangleRule rectangle (lookup: CellFinder) =
-    let summarized = summarizeRectangle lookup rectangle
-    let changes = solveUniqueRectangleRotations summarized lookup
-    { rule = "unique-rectangle"; changes = Option.defaultValue List.empty changes }
+    let result =
+        Seq.ofList twoBoxRectangles
+        |> Seq.filter (allCornersInSet possiblePositions)
+        |> Seq.map (summarizeRectangle lookup)
+        |> Seq.collect rotationsOf
+        |> Seq.map (solveUniqueRectangle lookup)
+        |> Seq.collect Option.toList
+        |> Seq.truncate 1
+        |> Seq.toList
 
-let uniqueRectangleRules =
-    twoBoxRectangles
-    |> List.map singleUniqueRectangleRule
+    let changes =
+        match result with
+        | list :: _ -> list
+        | _ -> []
+
+    { rule = "unique-rectangle"; changes = changes }

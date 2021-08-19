@@ -8,7 +8,7 @@ let AllRules =
     [ FixPencils.rule; SingleDigit.rule; SingleCell.rule ]
     @ SingleBox.rules
       @ Fish.XWingRules
-        @ Rectangle.uniqueRectangleRules
+        @ [Rectangle.uniqueRectangleRule]
           @ [ DigitChain.rule ]
             @ Fish.SwordfishRules
               @ Tuple.nakedRules

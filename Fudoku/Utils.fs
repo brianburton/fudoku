@@ -38,6 +38,8 @@ let findAndRemove (list: 'a list) (condition: 'a -> bool) =
     | [ single ] -> Some(single, [])
     | head :: _ -> Some(head, List.except [ head ] list)
 
+let listToOption list = if List.isEmpty list then None else Some list
+
 let intersectLists (xs: 'a seq) (ys: 'a seq) = xs.Intersect(ys) |> List.ofSeq
 
 let setsOverlap (a: Set<'a>) (b: Set<'a>) =
