@@ -7,12 +7,12 @@ type SolutionStep = { rule: string; puzzle: Puzzle }
 let AllRules =
     [ FixPencils.rule; SingleDigit.rule; SingleCell.rule ]
     @ SingleBox.rules
-      @ Fish.XWingRules
-        @ [Rectangle.uniqueRectangleRule]
-          @ [ DigitChain.rule ]
-            @ Fish.SwordfishRules
-              @ Tuple.nakedRules
-                @ Tuple.hiddenRules @ [ BUG.rule ]
+      @ Tuple.nakedRules
+        @ Tuple.hiddenRules
+          @ [ Rectangle.uniqueRectangleRule ]
+            @ Fish.XWingRules
+              @ [ DigitChain.rule ]
+                @ Fish.SwordfishRules @ [ BUG.rule ]
 
 let fixPencils puzzle =
     let x = applyRules (cellFinder puzzle) [ FixPencils.rule ]
