@@ -201,8 +201,8 @@ let groupPencils group =
 
 let lookupCellCombination (group: Position list) (combo: Combination<Digit>) (lookup: CellFinder) =
     let posMapper =
-        let map = List.zip AllDigits group |> Map.ofList
-        (fun digit -> Map.find digit map)
+        let map = List.zip AllDigits group |> FastMap.ofList
+        (fun digit -> FastMap.find digit map)
 
     let digitMapper pos = posMapper pos |> lookup
     let insideCells = combo.inside |> List.map digitMapper

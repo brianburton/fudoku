@@ -1,9 +1,10 @@
 module Fudoku.Puzzle
 
+open Fudoku.Utils
 open Fudoku.Domain
 
-type PuzzleSolution = Map<Position, Digit>
-type Puzzle = Map<Position, Cell>
+type PuzzleSolution = FastMap<Position, Digit>
+type Puzzle = FastMap<Position, Cell>
 
 type RuleResultChange =
     | Solved of Digit
@@ -25,25 +26,25 @@ type CellDiff =
 let emptyPuzzle: Puzzle =
     AllPositions
     |> List.map (fun p -> p, starterCell p)
-    |> Map.ofList
+    |> FastMap.ofSeq
 
 let addToPuzzle (pz: Puzzle) (cells: Cell list) : Puzzle =
-    let addCell puzzle cell = Map.add cell.position cell puzzle
+    let addCell puzzle cell = FastMap.add cell.position cell puzzle
 
     cells |> List.fold addCell pz
 
 let isCompleteSolution (s: PuzzleSolution) = s.Count = AllPositions.Length
 
-let cellFinder pz = fun p -> Map.find p pz
+let cellFinder pz = fun p -> FastMap.find p pz
 
 let applyRuleResults results puzzle =
-    let solve p d pz = pz |> Map.add p (solvedCell p d)
+    let solve p d pz = pz |> FastMap.add p (solvedCell p d)
 
     let updatePencils p ds pz op =
-        let currentPencils = cellPencils (Map.find p pz)
+        let currentPencils = cellPencils (FastMap.find p pz)
         let changedPencils = op currentPencils ds
         let changedCell = unsolvedCell p changedPencils
-        Map.add p changedCell pz
+        FastMap.add p changedCell pz
 
     let remove p ds pz = updatePencils p ds pz Set.difference
 
@@ -74,7 +75,7 @@ let rec applyRules lookup rules =
 
 let diffPuzzles pz1 pz2 =
     AllPositions
-    |> List.map (fun p -> p, (Map.find p pz1), (Map.find p pz2))
+    |> List.map (fun p -> p, (FastMap.find p pz1), (FastMap.find p pz2))
     |> List.filter (fun (_, a, b) -> a <> b)
     |> List.map
         (fun (p, a, b) ->

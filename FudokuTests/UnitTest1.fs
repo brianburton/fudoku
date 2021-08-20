@@ -144,7 +144,7 @@ let cellsLinkedByDigitsTest () =
 [<Test>]
 let setMaps () =
     let m =
-        SetMap.empty
+        SetMap.empty ()
         |> SetMap.add One Two
         |> SetMap.add One Three
         |> SetMap.add Two Four
@@ -167,7 +167,7 @@ let setMaps () =
 
     let splitter x = (String.length x,x)
 
-    let x = ["a";"ab";"abc";"cd";"efg"] |> List.fold (SetMap.folder splitter) SetMap.empty
+    let x = ["a";"ab";"abc";"cd";"efg"] |> List.fold (SetMap.folder splitter) (SetMap.empty ())
     Assert.AreEqual(Set.ofList ["ab";"cd"], SetMap.get 2 x)
 
     let y = ["a";"ab";"abc";"cd";"efg"] |> SetMap.ofList splitter

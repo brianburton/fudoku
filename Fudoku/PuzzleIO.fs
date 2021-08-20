@@ -1,6 +1,7 @@
 module Fudoku.PuzzleIO
 
 open Fudoku.Domain
+open Fudoku.Utils
 open Fudoku.Puzzle
 open System.IO
 open System.Text.RegularExpressions
@@ -48,7 +49,7 @@ let stringToPuzzle source =
             let puzzle =
                 List.zip AllPositions digits
                 |> List.map createCell
-                |> Map.ofList
+                |> FastMap.ofList
 
             Ok puzzle)
 
