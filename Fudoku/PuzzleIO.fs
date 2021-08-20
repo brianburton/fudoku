@@ -64,8 +64,8 @@ let readFileAsPuzzle path =
 
 let solvedCellsToString cells =
     let cell c =
-        match c with
-        | { position = _; value = Answer d } -> digitToString d
+        match c.value with
+        | Answer d  -> digitToString d
         | _ -> " "
 
     let rec segment group str =
@@ -77,7 +77,10 @@ let solvedCellsToString cells =
 
 let unsolvedCellsToString cells =
     let cell c =
-        let s = cellPencils c |> digitsToString
+        let s =
+            match c.value with
+            | Answer d -> "" //$"( %s{digitToString d} )"
+            | Pencils ds -> digitsToString ds
         let pad = 9 - s.Length
         let leftPad = pad / 2
         let rightPad = pad - leftPad
