@@ -35,7 +35,7 @@ let printResult (prev:Puzzle) (step: SolutionStep) =
         | diff :: tail -> printDiff diff tail
         | _ -> ()
 
-    let diffs = diffPuzzles prev step.puzzle
+    let diffs = diffPuzzles (cellFinder prev) (cellFinder step.puzzle)
     printfn $"Rule: %s{step.rule}"
     printDiffs diffs
     printfn $"%s{puzzleToString step.puzzle}"

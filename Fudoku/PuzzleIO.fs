@@ -35,8 +35,8 @@ let stringToPuzzle source =
 
     let createCell (pos, digit) =
         match digit with
-        | Some d -> pos, solvedCell pos d
-        | None -> pos, starterCell pos
+        | Some d -> solvedCell pos d
+        | None -> starterCell pos
 
     let filtered =
         Regex.Replace(source, "[^0123456789.]", "")
@@ -49,7 +49,7 @@ let stringToPuzzle source =
             let puzzle =
                 List.zip AllPositions digits
                 |> List.map createCell
-                |> FastMap.ofList
+                |> puzzleFromList
 
             Ok puzzle)
 
