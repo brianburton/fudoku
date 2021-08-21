@@ -73,3 +73,15 @@ let diffPuzzles pz1 pz2 =
     |> List.map (fun p -> p, (pz1 p), (pz2 p))
     |> List.filter (fun (_, a, b) -> a <> b)
     |> List.map (fun (p, a, b) -> { diffPosition = p; before = a.value; after = b.value })
+
+let positionsWithPencilsSet (lookup:CellFinder) =
+    let hasPencils cell =
+        match cell.value with
+        | Pencils ds -> FastSet.length ds >= 2
+        | _ -> false
+
+    Seq.ofList AllPositions
+    |> Seq.map lookup
+    |> Seq.filter hasPencils
+    |> Seq.map (fun c -> c.position)
+    |> FastSet.ofSeq

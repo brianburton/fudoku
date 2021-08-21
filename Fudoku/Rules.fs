@@ -11,7 +11,7 @@ module SingleDigit =
             |> List.map lookup
             |> List.map (fun c -> (c, cellPencils c))
             |> List.filter (fun (_, ds) -> (FastSet.length ds) = 1)
-            |> List.map (fun (c, ds) -> c.position, Solved (FastSet.head ds))
+            |> List.map (fun (c, ds) -> c.position, Solved(FastSet.head ds))
 
         { rule = "single-pencil"; changes = changes }
 
@@ -51,7 +51,7 @@ module SingleCell =
 
         if (FastSet.length uniqueDigits) = 1 then
             cells.inside
-            |> List.map (fun c -> c.position, Solved (FastSet.head uniqueDigits))
+            |> List.map (fun c -> c.position, Solved(FastSet.head uniqueDigits))
         else
             List.empty
 
@@ -86,58 +86,64 @@ module Tuple =
                 |> List.collect (fun d -> (cellsWithPencil d remainingCells))
                 |> List.exists (fun (d, c) -> tryNextCell d c)
 
-            if remainingCells.IsEmpty && (FastSet.isEmpty remainingDigits) then true
-            elif remainingCells.IsEmpty || (FastSet.isEmpty remainingDigits) then false
-            else tryRemainingCells
+            if remainingCells.IsEmpty
+               && (FastSet.isEmpty remainingDigits) then
+                true
+            elif remainingCells.IsEmpty
+                 || (FastSet.isEmpty remainingDigits) then
+                false
+            else
+                tryRemainingCells
 
         List.exists (solveForCell cells digits) cells
 
-    let hiddenPencils (group: Position list) (combo: Combination<Digit>) (lookup: CellFinder) =
-        let cells = lookupCellCombination group combo lookup
-
-        let len = cells.inside.Length
-        let insideDigits = groupPencils cells.inside
-        let outsideDigits = groupPencils cells.outside
-        let uniqueDigits = FastSet.difference insideDigits outsideDigits
-
-        let changes =
-            if (FastSet.length uniqueDigits) = len
-               && uniqueDigits <> insideDigits
-               && cellsLinkedByDigits cells.inside uniqueDigits then
-                cells.inside
-                |> List.map (fun c -> c.position, RetainPencils uniqueDigits)
-            else
-                List.empty
-
-        { rule = $"hidden-pencils-%d{len}"; changes = changes }
-
-    let nakedPencils (group: Position list) (combo: Combination<Digit>) (lookup: CellFinder) =
-        let cells = lookupCellCombination group combo lookup
-
+    let private solveNakedPencils (cells: Combination<Cell>) =
         let len = cells.inside.Length
         let insideDigits = groupPencils cells.inside
         let outsideDigits = groupPencils cells.outside
         let commonDigits = FastSet.intersect insideDigits outsideDigits
 
+        if (FastSet.length insideDigits) = len
+           && (FastSet.length commonDigits) > 0
+           && cellsLinkedByDigits cells.inside insideDigits then
+            cells.outside
+            |> List.filter (cellContainsPencils commonDigits)
+            |> List.map (fun c -> c.position, RemovePencils commonDigits)
+        else
+            List.empty
+
+    let private solveHiddenPencils (cells: Combination<Cell>) =
+        let len = cells.inside.Length
+        let insideDigits = groupPencils cells.inside
+        let outsideDigits = groupPencils cells.outside
+        let uniqueDigits = FastSet.difference insideDigits outsideDigits
+
+        if (FastSet.length uniqueDigits) = len
+           && uniqueDigits <> insideDigits
+           && cellsLinkedByDigits cells.inside uniqueDigits then
+            cells.inside
+            |> List.map (fun c -> c.position, RetainPencils uniqueDigits)
+        else
+            List.empty
+
+    let private ruleTemplate solver title (lookup: CellFinder) =
+        let positionFilter = positionsWithPencilsSet lookup
+
         let changes =
-            if (FastSet.length insideDigits) = len
-               && (FastSet.length commonDigits) > 0
-               && cellsLinkedByDigits cells.inside insideDigits then
-                cells.outside
-                |> List.filter (cellContainsPencils commonDigits)
-                |> List.map (fun c -> c.position, RemovePencils commonDigits)
-            else
-                List.empty
+            Seq.ofList AllPositionCombos
+            |> Seq.filter (fun c -> FastSet.containsAll positionFilter c.inside)
+            |> Seq.map (lookupCellCombination2 lookup)
+            |> Seq.map solver
+            |> Seq.tryFind (fun changes -> not (List.isEmpty changes))
+            |> Option.defaultValue []
 
-        { rule = $"naked-pencils-%d{len}"; changes = changes }
+        { rule = title; changes = changes }
 
-    let hiddenRules =
-        List.allPairs AllGroups MultiDigitCombinations
-        |> List.map (fun (group, combo) -> hiddenPencils group combo)
+    let hiddenRule = ruleTemplate solveHiddenPencils "hidden-pencils"
+    let nakedRule = ruleTemplate solveNakedPencils "naked-pencils"
 
-    let nakedRules =
-        List.allPairs AllGroups MultiDigitCombinations
-        |> List.map (fun (group, combo) -> nakedPencils group combo)
+
+
 
 module SingleBox =
     let private singleBoxRule (combo: Combination<Position>) (lookup: CellFinder) =

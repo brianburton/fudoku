@@ -210,6 +210,26 @@ let lookupCellCombination (group: Position list) (combo: Combination<Digit>) (lo
 
     { inside = insideCells; outside = outsideCells }
 
+let positionCombination (group: Position list) (combo: Combination<Digit>) =
+    let posMapper =
+        let map = List.zip AllDigits group |> FastMap.ofList
+        (fun digit -> FastMap.find digit map)
+
+    let digitMapper pos = posMapper pos
+    let insideCells = combo.inside |> List.map digitMapper
+    let outsideCells = combo.outside |> List.map digitMapper
+
+    { inside = insideCells; outside = outsideCells }
+
+let lookupCellCombination2 (lookup: CellFinder) (combo: Combination<Position>)  =
+    let insideCells = combo.inside |> List.map lookup
+    let outsideCells = combo.outside |> List.map lookup
+    { inside = insideCells; outside = outsideCells }
+
+let AllPositionCombos =
+    List.allPairs AllGroups MultiDigitCombinations
+    |> List.map (fun (group, combo) -> positionCombination group combo)
+
 let cellPencilList cell =
     cellPencils cell
     |> FastSet.toList

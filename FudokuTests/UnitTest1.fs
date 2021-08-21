@@ -69,7 +69,7 @@ let hiddenPairTest () =
 
     let expected = [ (position One One), retained; (position One Two), retained ]
 
-    let actual = Fudoku.Tuple.hiddenPencils group combo (cellFinder before)
+    let actual = Fudoku.Tuple.hiddenRule (cellFinder before)
 
     Assert.AreEqual(expected, actual.changes)
 
@@ -135,7 +135,8 @@ let cellsLinkedByDigitsTest () =
 
 [<Test>]
 let setMaps () =
-    let emptySet:FastSet<Digit> = FastSet.empty ()
+    let emptySet: FastSet<Digit> = FastSet.empty ()
+
     let m =
         SetMap.empty ()
         |> SetMap.add One Two
