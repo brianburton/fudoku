@@ -41,7 +41,7 @@ type Position =
 
 type CellValue =
     | Answer of Digit
-    | Pencils of Set<Digit>
+    | Pencils of FastSet<Digit>
 
 type Cell = { position: Position; value: CellValue }
 
@@ -51,7 +51,7 @@ type Combination<'T> = { inside: 'T list; outside: 'T list }
 
 let AllDigits = [ One; Two; Three; Four; Five; Six; Seven; Eight; Nine ]
 
-let AllDigitsSet = AllDigits |> Set.ofList
+let AllDigitsSet = AllDigits |> FastSet.ofSeq
 
 let comboOf digits : Combination<Digit> =
     let others = AllDigits |> List.except digits
@@ -182,22 +182,22 @@ let starterCell p = unsolvedCell p AllDigitsSet
 let cellPencils c =
     match c.value with
     | Pencils ds -> ds
-    | Answer _ -> Set.empty
+    | Answer _ -> FastSet.empty ()
 
 let cellDigit c =
     match c.value with
-    | Pencils _ -> Set.empty
-    | Answer d -> Set.singleton d
+    | Pencils _ -> FastSet.empty ()
+    | Answer d -> FastSet.singleton d
 
 let cellContainsPencils ds c =
     let pencils = cellPencils c
-    let common = Set.intersect ds pencils
-    (Set.count common) > 0
+    let common = FastSet.intersect ds pencils
+    (FastSet.length common) > 0
 
 let groupPencils group =
     group
     |> List.map cellPencils
-    |> List.fold Set.union Set.empty
+    |> List.fold FastSet.union (FastSet.empty ())
 
 let lookupCellCombination (group: Position list) (combo: Combination<Digit>) (lookup: CellFinder) =
     let posMapper =
@@ -212,7 +212,7 @@ let lookupCellCombination (group: Position list) (combo: Combination<Digit>) (lo
 
 let cellPencilList cell =
     cellPencils cell
-    |> Set.toList
+    |> FastSet.toList
     |> List.map (fun d -> (d, cell.position))
 
 let createDigitMap (group: Position list) (lookup: CellFinder) : SetMap<Digit, Position> =

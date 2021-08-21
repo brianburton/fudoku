@@ -15,7 +15,7 @@ let private wrap f =
 let digitToString d = d.ToString()
 
 let digitsToString ds =
-    Set.toList ds
+    FastSet.toList ds
     |> List.map digitToString
     |> List.fold (fun acc s -> acc + s) ""
 

@@ -8,6 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <Compile Include="FastSetTests.fs" />
         <Compile Include="Common.fs" />
         <Compile Include="UnitTest1.fs" />
         <Compile Include="FishTests.fs" />

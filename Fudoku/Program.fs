@@ -1,5 +1,6 @@
 ﻿module Fudoku.App
 
+open Fudoku.Utils
 open Fudoku.Domain
 open Fudoku.Solver
 open Fudoku.Puzzle
@@ -8,8 +9,8 @@ open Fudoku.PuzzleIO
 let printResult (prev:Puzzle) (step: SolutionStep) =
     let printPencilDiffs before after =
         let extra =
-            if Set.isProperSuperset before after then
-                $" - {digitsToString (Set.difference before after)}"
+            if FastSet.isProperSuperset before after then
+                $" - {digitsToString (FastSet.difference before after)}"
             else
                 ""
 

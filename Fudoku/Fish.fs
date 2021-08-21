@@ -94,9 +94,9 @@ let fishRuleForCombo (rowCombo: Combination<Digit>) (colCombo: Combination<Digit
     let outsidePencils = groupPencils combo.outside
 
     let uniquePencils =
-        Set.difference insidePencils outsidePencils
+        FastSet.difference insidePencils outsidePencils
 
-    if uniquePencils.Count <> 1 then
+    if (FastSet.length uniquePencils) <> 1 then
         []
     else
         let positions =

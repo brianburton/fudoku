@@ -10,8 +10,8 @@ module SingleDigit =
             group
             |> List.map lookup
             |> List.map (fun c -> (c, cellPencils c))
-            |> List.filter (fun (_, ds) -> ds.Count = 1)
-            |> List.map (fun (c, ds) -> c.position, Solved ds.MinimumElement)
+            |> List.filter (fun (_, ds) -> (FastSet.length ds) = 1)
+            |> List.map (fun (c, ds) -> c.position, Solved (FastSet.head ds))
 
         { rule = "single-pencil"; changes = changes }
 
@@ -26,13 +26,13 @@ module FixPencils =
             let digitsInGroup =
                 cellsInGroup
                 |> List.map cellDigit
-                |> List.fold Set.union Set.empty
+                |> List.fold FastSet.union (FastSet.empty ())
 
-            let pencilsToRemoveFromCell c = Set.intersect digitsInGroup (cellPencils c)
+            let pencilsToRemoveFromCell c = FastSet.intersect digitsInGroup (cellPencils c)
 
             cellsInGroup
             |> List.map (fun c -> c, pencilsToRemoveFromCell c)
-            |> List.filter (fun (_, ds) -> ds.Count > 0)
+            |> List.filter (fun (_, ds) -> (FastSet.length ds) > 0)
             |> List.map (fun (c, ds) -> c.position, RemovePencils ds)
 
         let changes = List.collect solveGroup AllGroups
@@ -47,11 +47,11 @@ module SingleCell =
 
         let insideDigits = groupPencils cells.inside
         let outsideDigits = groupPencils cells.outside
-        let uniqueDigits = insideDigits - outsideDigits
+        let uniqueDigits = FastSet.difference insideDigits outsideDigits
 
-        if uniqueDigits.Count = 1 then
+        if (FastSet.length uniqueDigits) = 1 then
             cells.inside
-            |> List.map (fun c -> c.position, Solved uniqueDigits.MinimumElement)
+            |> List.map (fun c -> c.position, Solved (FastSet.head uniqueDigits))
         else
             List.empty
 
@@ -64,30 +64,30 @@ module SingleCell =
 
 module Tuple =
 
-    let cellsLinkedByDigits (cells: Cell list) (digits: Set<Digit>) : bool =
+    let cellsLinkedByDigits (cells: Cell list) (digits: FastSet<Digit>) : bool =
         let cellsWithPencil digit cells =
             cells
-            |> List.filter (fun c -> Set.contains digit (cellPencils c))
+            |> List.filter (fun c -> FastSet.contains digit (cellPencils c))
             |> List.map (fun c -> digit, c)
 
-        let rec solveForCell (remainingCells: Cell list) (remainingDigits: Set<Digit>) (current: Cell) =
+        let rec solveForCell (remainingCells: Cell list) (remainingDigits: FastSet<Digit>) (current: Cell) =
             let tryNextCell digit cell =
                 let newRemainingCells = List.except [ cell ] remainingCells
-                let newRemainingDigits = Set.remove digit remainingDigits
+                let newRemainingDigits = FastSet.remove digit remainingDigits
                 solveForCell newRemainingCells newRemainingDigits cell
 
             let tryRemainingCells =
                 let currentDigits = (cellPencils current)
 
-                let availableDigits = Set.intersect currentDigits remainingDigits
+                let availableDigits = FastSet.intersect currentDigits remainingDigits
 
                 availableDigits
-                |> Set.toList
+                |> FastSet.toList
                 |> List.collect (fun d -> (cellsWithPencil d remainingCells))
                 |> List.exists (fun (d, c) -> tryNextCell d c)
 
-            if remainingCells.IsEmpty && remainingDigits.IsEmpty then true
-            elif remainingCells.IsEmpty || remainingDigits.IsEmpty then false
+            if remainingCells.IsEmpty && (FastSet.isEmpty remainingDigits) then true
+            elif remainingCells.IsEmpty || (FastSet.isEmpty remainingDigits) then false
             else tryRemainingCells
 
         List.exists (solveForCell cells digits) cells
@@ -98,10 +98,10 @@ module Tuple =
         let len = cells.inside.Length
         let insideDigits = groupPencils cells.inside
         let outsideDigits = groupPencils cells.outside
-        let uniqueDigits = insideDigits - outsideDigits
+        let uniqueDigits = FastSet.difference insideDigits outsideDigits
 
         let changes =
-            if uniqueDigits.Count = len
+            if (FastSet.length uniqueDigits) = len
                && uniqueDigits <> insideDigits
                && cellsLinkedByDigits cells.inside uniqueDigits then
                 cells.inside
@@ -117,11 +117,11 @@ module Tuple =
         let len = cells.inside.Length
         let insideDigits = groupPencils cells.inside
         let outsideDigits = groupPencils cells.outside
-        let commonDigits = Set.intersect insideDigits outsideDigits
+        let commonDigits = FastSet.intersect insideDigits outsideDigits
 
         let changes =
-            if insideDigits.Count = len
-               && commonDigits.Count > 0
+            if (FastSet.length insideDigits) = len
+               && (FastSet.length commonDigits) > 0
                && cellsLinkedByDigits cells.inside insideDigits then
                 cells.outside
                 |> List.filter (cellContainsPencils commonDigits)
@@ -148,9 +148,9 @@ module SingleBox =
         let insidePencils = groupPencils insideCells
         let outsidePencils = groupPencils outsideCells
 
-        let uniquePencils = Set.difference insidePencils outsidePencils
+        let uniquePencils = FastSet.difference insidePencils outsidePencils
 
-        let isAllInBox = uniquePencils.Count > 0
+        let isAllInBox = FastSet.length uniquePencils > 0
 
         let boxCellsToChange () =
             let first = List.head insideCells
@@ -188,7 +188,7 @@ module BUG =
         let summary =
             AllPositions
             |> List.map lookup
-            |> List.map (fun cell -> (Set.count (cellPencils cell), cell))
+            |> List.map (fun cell -> (FastSet.length (cellPencils cell), cell))
             |> List.fold
                 (fun (pairs, triples, others, triple) (count, cell) ->
                     match count with

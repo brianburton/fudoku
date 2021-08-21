@@ -1,6 +1,7 @@
 module Fudoku.Tests.Common
 
 open FSharpx.Collections
+open Fudoku.Utils
 open Fudoku.Domain
 open Fudoku.Puzzle
 
@@ -18,7 +19,7 @@ let dig x =
     | _ -> invalidArg "x" "not a valid digit"
 
 let digList digits = digits |> List.map dig
-let digSet digits = digits |> digList |> Set.ofList
+let digSet digits = digits |> digList |> FastSet.ofSeq
 
 let pos (a, b) = position (dig a) (dig b)
 let posList list = list |> List.map pos
@@ -39,7 +40,7 @@ let bulkRetainPencils positions digits puzzle =
     let change = RetainPencils(digits |> digSet)
     puzzle |> bulkApplyChange positions change
 
-let unsolvedCellRC r c ds = unsolvedCell (position r c) (Set.ofList ds)
+let unsolvedCellRC r c ds = unsolvedCell (position r c) (FastSet.ofSeq ds)
 
 let solvedCellRC r c d = solvedCell (position r c) d
 

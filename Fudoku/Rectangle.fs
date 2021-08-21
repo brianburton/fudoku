@@ -31,7 +31,7 @@ let twoBoxRectangles =
     |> List.map cornersToRect
     |> List.filter isTwoBoxer
 
-type CellSummary = { cellPos: Position; cellPencils: Set<Digit> }
+type CellSummary = { cellPos: Position; cellPencils: FastSet<Digit> }
 
 let summarizeCell lookup pos = { cellPos = pos; cellPencils = cellPencils (lookup pos) }
 
@@ -45,35 +45,35 @@ let summarizeRectangle (lookup: CellFinder) (posRect: Rectangle<Position>) =
 
 let solveUniqueRectangle lookup rectangle =
     let singleCellWithExtraPencils pencils c d =
-        if pencils = c.cellPencils
-           && pencils = (Set.intersect d.cellPencils pencils)
-           && d.cellPencils.Count <> 2 then
+        if (FastSet.equals pencils c.cellPencils)
+           && (FastSet.equals pencils (FastSet.intersect d.cellPencils pencils))
+           && (FastSet.length d.cellPencils) <> 2 then
             Some [ (d.cellPos, RemovePencils pencils) ]
         else
             None
 
     let twoCellsSharingOneExtraDigit pencils c d =
-        let extraDigits = Set.difference c.cellPencils pencils
+        let extraDigits = FastSet.difference c.cellPencils pencils
 
-        if (Set.intersect pencils c.cellPencils) <> pencils
-           || c.cellPencils <> d.cellPencils
-           || extraDigits.Count <> 1 then
+        if (FastSet.notEquals (FastSet.intersect pencils c.cellPencils) pencils)
+           || (FastSet.notEquals c.cellPencils d.cellPencils)
+           || (FastSet.length extraDigits) <> 1 then
             None
         else
             commonNeighbors c.cellPos d.cellPos
             |> List.map lookup
-            |> List.filter (fun x -> Set.isSuperset (cellPencils x) extraDigits)
+            |> List.filter (fun x -> FastSet.isSuperset (cellPencils x) extraDigits)
             |> List.map (fun x -> (x.position, RemovePencils extraDigits))
             |> listToOption
 
     let twoCellsActingAsPair pencils c d =
         let extraDigits =
-            Set.union c.cellPencils d.cellPencils
-            |> (fun u -> Set.difference u pencils)
+            FastSet.union c.cellPencils d.cellPencils
+            |> (fun u -> FastSet.difference u pencils)
 
-        if (Set.intersect pencils c.cellPencils) <> pencils
-           || (Set.intersect pencils d.cellPencils) <> pencils
-           || extraDigits.Count <> 2 then
+        if (FastSet.notEquals (FastSet.intersect pencils c.cellPencils) pencils)
+           || (FastSet.notEquals (FastSet.intersect pencils d.cellPencils)  pencils)
+           || (FastSet.length extraDigits) <> 2 then
             None
         else
             let commonPositions = commonNeighbors c.cellPos d.cellPos
@@ -85,7 +85,7 @@ let solveUniqueRectangle lookup rectangle =
                 (fun cell ->
                     intersectLists commonPositions (allNeighbors cell.position)
                     |> List.map lookup
-                    |> List.filter (fun x -> (setsOverlap (cellPencils x) extraDigits))
+                    |> List.filter (fun x -> (FastSet.overlaps (cellPencils x) extraDigits))
                     |> List.map (fun x -> (x.position, RemovePencils extraDigits)))
             |> listToOption
 
@@ -96,8 +96,8 @@ let solveUniqueRectangle lookup rectangle =
 
     match rectangle with
     | { topLeft = a; topRight = b; bottomLeft = c; bottomRight = d } ->
-        if a.cellPencils.Count <> 2
-           || b.cellPencils <> a.cellPencils then
+        if (FastSet.length a.cellPencils) <> 2
+           || (FastSet.notEquals b.cellPencils a.cellPencils) then
             None
         else
             solve a c d
@@ -120,7 +120,7 @@ let uniqueRectangleRule (lookup: CellFinder) : RuleResult =
     let possiblePositions =
         AllPositions
         |> List.map lookup
-        |> List.filter (fun cell -> (Set.count (cellPencils cell)) >= 2)
+        |> List.filter (fun cell -> (FastSet.length (cellPencils cell)) >= 2)
         |> List.map (fun cell -> cell.position)
         |> Set.ofList
 

@@ -8,9 +8,9 @@ type Puzzle = FastMap<Position, Cell>
 
 type RuleResultChange =
     | Solved of Digit
-    | RemovePencils of Set<Digit>
-    | RetainPencils of Set<Digit>
-    | AddPencils of Set<Digit>
+    | RemovePencils of FastSet<Digit>
+    | RetainPencils of FastSet<Digit>
+    | AddPencils of FastSet<Digit>
 
 type RuleResult =
     { rule: string
@@ -46,10 +46,10 @@ let applyRuleResults results puzzle =
         let changedCell = unsolvedCell p changedPencils
         FastMap.add p changedCell pz
 
-    let remove p ds pz = updatePencils p ds pz Set.difference
+    let remove p ds pz = updatePencils p ds pz FastSet.difference
 
-    let retain p ds pz = updatePencils p ds pz Set.intersect
-    let add p ds pz = updatePencils p ds pz Set.union
+    let retain p ds pz = updatePencils p ds pz FastSet.intersect
+    let add p ds pz = updatePencils p ds pz FastSet.union
 
     let applyResult pz (p, result) =
         match result with

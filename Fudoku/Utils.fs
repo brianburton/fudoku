@@ -43,16 +43,14 @@ let listToOption list = if List.isEmpty list then None else Some list
 
 let intersectLists (xs: 'a seq) (ys: 'a seq) = xs.Intersect(ys) |> List.ofSeq
 
-let setsOverlap (a: Set<'a>) (b: Set<'a>) =
-    let common = Set.intersect a b
-    (Set.count common) > 0
-
-let setContainsElement set = fun e -> Set.contains e set
-
-type FastMap<'K,'V when 'K: equality and 'V: equality> = PersistentHashMap<'K,'V>
+type FastMap<'K, 'V when 'K: equality and 'V: equality> = PersistentHashMap<'K, 'V>
 
 module FastMap =
-    let empty ()  = PersistentHashMap.empty
+    let empty () = PersistentHashMap.empty
+
+    let singleton k v =
+        PersistentHashMap.empty
+        |> PersistentHashMap.add k v
 
     let containsKey k m = PersistentHashMap.containsKey k m
 
@@ -64,7 +62,7 @@ module FastMap =
 
     let tryFind k m =
         if PersistentHashMap.containsKey k m then
-            Some (PersistentHashMap.find k m)
+            Some(PersistentHashMap.find k m)
         else
             None
 
@@ -72,6 +70,8 @@ module FastMap =
         match f (tryFind k m) with
         | Some v -> add k v m
         | None -> remove k m
+
+    let length m = PersistentHashMap.length m
 
     let ofSeq = PersistentHashMap.ofSeq
 
@@ -81,16 +81,105 @@ module FastMap =
 
     let toList m = m |> toSeq |> List.ofSeq
 
-type SetMap<'K, 'V when 'K: comparison and 'V: comparison> = private SetMap of FastMap<'K, Set<'V>>
+    let keys m = m |> toSeq |> Seq.map fst
+
+type FastSet<'T when 'T: equality> = private FastSet of FastMap<'T, bool>
+
+module FastSet =
+    let toSeq (FastSet set) = FastMap.keys set
+
+    let empty () = FastMap.empty () |> FastSet
+
+    let singleton x = FastMap.singleton x true |> FastSet
+
+    let isEmpty (FastSet set) = FastMap.length set = 0
+
+    let add x (FastSet set) = FastMap.add x true set |> FastSet
+
+    let addAll (FastSet set) xs =
+        xs
+        |> Seq.fold (fun s x -> FastMap.add x true s) set
+        |> FastSet
+
+    let ofSeq xs = xs |> addAll (empty ())
+
+    let remove x (FastSet set) = FastMap.remove x set |> FastSet
+
+    let except xs (FastSet set) =
+        xs
+        |> Seq.fold (fun s x -> FastMap.remove x s) set
+        |> FastSet
+
+    let contains x (FastSet set) = FastMap.containsKey x set
+
+    let containsAll (FastSet set) xs =
+        xs
+        |> Seq.forall (fun x -> FastMap.containsKey x set)
+
+    let containsAny (FastSet set) xs =
+        xs
+        |> Seq.tryFind (fun x -> FastMap.containsKey x set)
+        |> Option.isSome
+
+    let overlaps set other = containsAny set (toSeq other)
+
+    let length (FastSet set) = FastMap.length set
+    let head (FastSet set) = FastMap.keys set |> Seq.head
+
+    let private biggerFirst a b = if (length a) >= (length b) then (a, b) else (b, a)
+
+    let intersect a b =
+        let bigger, smaller = biggerFirst a b
+
+        let extra =
+            toSeq smaller
+            |> Seq.filter (fun x -> not (contains x bigger))
+
+        except extra smaller
+
+    let union a b =
+        let bigger, smaller = biggerFirst a b
+
+        toSeq smaller |> addAll bigger
+
+    let difference a b = except (toSeq b) a
+
+    let map f set = toSeq set |> Seq.map f |> ofSeq
+
+    let bind f set = toSeq set |> Seq.collect (fun x -> toSeq (f x)) |> ofSeq
+
+    let filter f set =
+        let extra = toSeq set |> Seq.filter (fun x -> not (f x))
+        except extra set
+
+    let toFilter set = (fun x -> contains x set)
+
+    let isSuperset set other = toSeq other |> containsAll set
+
+    let isProperSuperset set other =
+        (length set) > (length other)
+        && (isSuperset set other)
+
+    let equals set other =
+        (length set) = (length other)
+        && (isSuperset set other)
+
+    let notEquals set other =
+        (length set) <> (length other)
+        || not (isSuperset set other)
+
+    let toList set = toSeq set |> List.ofSeq
+
+type SetMap<'K, 'V when 'K: comparison and 'V: comparison> = private SetMap of FastMap<'K, FastSet<'V>>
 
 module SetMap =
-    let empty () = SetMap (FastMap.empty ())
+    let empty () = SetMap(FastMap.empty ())
 
     let add key value (SetMap setMap) =
         let adder vs =
             match vs with
-            | Some set -> Set.add value set
-            | None -> Set.singleton value
+            | Some set -> FastSet.add value set
+            | None -> FastSet.singleton value
             |> Some
 
         setMap |> FastMap.change key adder |> SetMap
@@ -98,20 +187,20 @@ module SetMap =
     let remove key value (SetMap setMap) =
         let remover vs =
             vs
-            |> Option.map (Set.remove value)
-            |> Option.filter (fun set -> not set.IsEmpty)
+            |> Option.map (FastSet.remove value)
+            |> Option.filter (fun set -> not (FastSet.isEmpty set))
 
         setMap |> FastMap.change key remover |> SetMap
 
     let get key (SetMap setMap) =
         FastMap.tryFind key setMap
-        |> Option.defaultValue Set.empty
+        |> Option.defaultValue (FastSet.empty ())
 
-    let contains key value setMap = get key setMap |> Set.contains value
+    let contains key value setMap = get key setMap |> FastSet.contains value
 
     let getCount key (SetMap setMap) =
         FastMap.tryFind key setMap
-        |> Option.map Set.count
+        |> Option.map FastSet.length
         |> Option.defaultValue 0
 
     let keys (SetMap setMap) = setMap |> FastMap.toList |> List.map fst

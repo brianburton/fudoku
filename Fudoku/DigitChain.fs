@@ -4,40 +4,40 @@ open Domain
 open Puzzle
 open Utils
 
-let jumpsFrom (source: Position) (positions: Set<Position>) : Set<Position * Position> =
+let jumpsFrom (source: Position) (positions: FastSet<Position>) : FastSet<Position * Position> =
     let jumpsInGroup group =
-        let active = Set.ofList group |> Set.intersect positions
+        let active = FastSet.ofSeq group |> FastSet.intersect positions
 
-        if Set.count active = 1 then [ (source, Set.minElement active) ] else []
+        if FastSet.length active = 1 then [ (source, FastSet.head active) ] else []
 
     [ (rowNeighbors source); (colNeighbors source); (boxNeighbors source) ]
     |> List.collect jumpsInGroup
-    |> Set.ofList
+    |> FastSet.ofSeq
 
-let allPossibleJumps (positionList: List<Position>) (positionSet: Set<Position>) =
+let allPossibleJumps (positionList: List<Position>) (positionSet: FastSet<Position>) =
     positionList
     |> List.map (fun p -> jumpsFrom p positionSet)
-    |> List.fold (fun ps p -> Set.union p ps) Set.empty
+    |> List.fold (fun ps p -> FastSet.union p ps) (FastSet.empty ())
 
-let solveForPosition (from: Position) (positionSet: Set<Position>) (validJumps: Set<Position * Position>) : Position option =
+let solveForPosition (from: Position) (positionSet: FastSet<Position>) (validJumps: FastSet<Position * Position>) : Position option =
     let neighborsOf pos =
         allNeighbors pos
         |> Seq.ofList
-        |> Seq.filter (setContainsElement positionSet)
+        |> Seq.filter (FastSet.toFilter positionSet)
 
-    let rec pathsFor (current: Position) (jumps: Set<Position * Position>) (first: bool) : Position seq seq =
+    let rec pathsFor (current: Position) (jumps: FastSet<Position * Position>) (first: bool) : Position seq seq =
         let jumper neighbor =
             let nextJumps =
                 jumps
-                |> Set.remove (current, neighbor)
-                |> Set.remove (neighbor, current)
+                |> FastSet.remove (current, neighbor)
+                |> FastSet.remove (neighbor, current)
 
             pathsFor neighbor nextJumps false
 
         let collector neighbor =
             match neighbor with
             | n when n = from -> if first then Seq.empty else Seq.singleton Seq.empty
-            | n when not (Set.contains (current, n) jumps) -> Seq.empty
+            | n when not (FastSet.contains (current, n) jumps) -> Seq.empty
             | n -> jumper n
 
         neighborsOf current
@@ -45,7 +45,7 @@ let solveForPosition (from: Position) (positionSet: Set<Position>) (validJumps: 
         |> Seq.map (fun path -> Seq.append path [ current ])
 
     let solve start =
-        let startJumps = validJumps |> Set.remove (start, from)
+        let startJumps = validJumps |> FastSet.remove (start, from)
         pathsFor start startJumps true
 
     let isEvenPath (path: Position seq) : bool =
@@ -59,7 +59,7 @@ let solveForPosition (from: Position) (positionSet: Set<Position>) (validJumps: 
     |> Option.map (fun _ -> from)
 
 let solveForDigit digit positionSet =
-    let positionList = positionSet |> Set.toList
+    let positionList = positionSet |> FastSet.toList
     let jumpSet = allPossibleJumps positionList positionSet
 
     positionList
@@ -67,7 +67,7 @@ let solveForDigit digit positionSet =
     |> Seq.map (fun p -> solveForPosition p positionSet jumpSet)
     |> Seq.tryFind Option.isSome
     |> Option.bind id
-    |> Option.map (fun p -> p, RemovePencils(Set.singleton digit))
+    |> Option.map (fun p -> p, RemovePencils(FastSet.singleton digit))
     |> Option.toList
 
 let rule lookup =
