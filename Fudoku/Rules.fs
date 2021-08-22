@@ -19,14 +19,14 @@ module SingleDigit =
 
 module FixPencils =
 
-    let private fixPencilsRule lookup =
+    let fixPencilsRule lookup =
         let solveGroup group =
             let cellsInGroup = List.map lookup group
 
             let digitsInGroup =
                 cellsInGroup
                 |> List.map cellDigit
-                |> List.fold FastSet.union (FastSet.empty ())
+                |> List.fold FastSet.union NoDigits
 
             let pencilsToRemoveFromCell c = FastSet.intersect digitsInGroup (cellPencils c)
 
@@ -38,8 +38,6 @@ module FixPencils =
         let changes = List.collect solveGroup AllGroups
 
         { rule = "fix-pencils"; changes = changes }
-
-    let rule lookup = fixPencilsRule lookup
 
 module SingleCell =
     let private singleCellPencil (lookup: CellFinder) (group: Position list) =
