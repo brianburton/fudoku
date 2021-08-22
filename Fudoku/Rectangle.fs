@@ -72,7 +72,7 @@ let solveUniqueRectangle lookup rectangle =
             |> (fun u -> FastSet.difference u pencils)
 
         if (FastSet.notEquals (FastSet.intersect pencils c.cellPencils) pencils)
-           || (FastSet.notEquals (FastSet.intersect pencils d.cellPencils)  pencils)
+           || (FastSet.notEquals (FastSet.intersect pencils d.cellPencils) pencils)
            || (FastSet.length extraDigits) <> 2 then
             None
         else
@@ -102,15 +102,16 @@ let solveUniqueRectangle lookup rectangle =
         else
             solve a c d
 
-let allCornersInSet (positions: Set<Position>) (rect: Rectangle<Position>) =
-    Set.contains rect.topLeft positions
-    && Set.contains rect.topRight positions
-    && Set.contains rect.bottomLeft positions
-    && Set.contains rect.bottomRight positions
+let allCornersInSet (positions: FastSet<Position>) (rect: Rectangle<Position>) =
+    FastSet.contains rect.topLeft positions
+    && FastSet.contains rect.topRight positions
+    && FastSet.contains rect.bottomLeft positions
+    && FastSet.contains rect.bottomRight positions
 
 let rotationsOf rect =
     seq {
         let mutable r = rect
+
         for _ in 1 .. 4 do
             yield r
             r <- rotateRectangle r
@@ -122,7 +123,7 @@ let uniqueRectangleRule (lookup: CellFinder) : RuleResult =
         |> List.map lookup
         |> List.filter (fun cell -> (FastSet.length (cellPencils cell)) >= 2)
         |> List.map (fun cell -> cell.position)
-        |> Set.ofList
+        |> FastSet.ofSeq
 
     let result =
         Seq.ofList twoBoxRectangles
