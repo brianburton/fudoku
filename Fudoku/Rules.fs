@@ -146,7 +146,21 @@ module Tuple =
 
 
 module SingleBox =
-    let private singleBoxRule (combo: Combination<Position>) (lookup: CellFinder) =
+    let private Combos =
+        let rowMappers =
+            AllDigits
+            |> List.map (fun r -> (fun c -> position r c))
+
+        let colMappers =
+            AllDigits
+            |> List.map (fun c -> (fun r -> position r c))
+
+        let allMappers = rowMappers @ colMappers
+
+        List.allPairs allMappers SingleSegmentDigitTriples
+        |> List.map (fun (mapper, combo) -> combinationMapper mapper combo)
+
+    let private solveSingleBox (combo: Combination<Position>) (lookup: CellFinder) =
         let insideCells: Cell list = combo.inside |> List.map lookup
 
         let outsideCells: Cell list = combo.outside |> List.map lookup
@@ -170,24 +184,16 @@ module SingleBox =
             neighbors
             |> List.map (fun c -> c.position, RemovePencils uniquePencils)
 
-        let changes = if isAllInBox then boxCellsToChange () else List.empty
+        if isAllInBox then boxCellsToChange () else List.empty
+
+    let rule (lookup: CellFinder) =
+        let changes =
+            Seq.ofList Combos
+            |> Seq.map (fun c -> solveSingleBox c lookup)
+            |> Seq.tryFind (fun changes -> not (List.isEmpty changes))
+            |> Option.defaultValue []
 
         { rule = "single-box"; changes = changes }
-
-    let rules =
-        let rowMappers =
-            AllDigits
-            |> List.map (fun r -> (fun c -> position r c))
-
-        let colMappers =
-            AllDigits
-            |> List.map (fun c -> (fun r -> position r c))
-
-        let allMappers = rowMappers @ colMappers
-
-        List.allPairs allMappers SingleSegmentDigitTriples
-        |> List.map (fun (mapper, combo) -> combinationMapper mapper combo)
-        |> List.map (fun combo -> singleBoxRule combo)
 
 module BUG =
     let seekBUG (lookup: CellFinder) : Cell option =

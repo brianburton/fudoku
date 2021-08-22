@@ -5,14 +5,17 @@ open Puzzle
 type SolutionStep = { rule: string; puzzle: Puzzle }
 
 let AllRules =
-    [ FixPencils.rule; SingleDigit.rule; SingleCell.rule ]
-    @ SingleBox.rules
-      @ [ Tuple.nakedRule ]
-        @ [ Tuple.hiddenRule ]
-          @ [ Rectangle.uniqueRectangleRule ]
-            @ [ Fish.xWingRule ]
-              @ [ DigitChain.rule ]
-                @ [ Fish.swordfishRule ] @ [ BUG.rule ]
+    [ FixPencils.rule
+      SingleDigit.rule
+      SingleCell.rule
+      SingleBox.rule
+      Tuple.nakedRule
+      Tuple.hiddenRule
+      Rectangle.uniqueRectangleRule
+      Fish.xWingRule
+      DigitChain.rule
+      Fish.swordfishRule
+      BUG.rule ]
 
 let fixPencils puzzle =
     let x = applyRules (cellFinder puzzle) [ FixPencils.rule ]
