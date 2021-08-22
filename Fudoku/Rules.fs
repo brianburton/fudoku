@@ -42,23 +42,18 @@ module FixPencils =
     let rule lookup = fixPencilsRule lookup
 
 module SingleCell =
-    let private singleCellPencil (group: Position list) (combo: Combination<Digit>) (lookup: CellFinder) =
-        let cells = lookupCellCombination group combo lookup
+    let private singleCellPencil (lookup: CellFinder) (group: Position list) =
+        let map = createDigitMap group lookup
 
-        let insideDigits = groupPencils cells.inside
-        let outsideDigits = groupPencils cells.outside
-        let uniqueDigits = FastSet.difference insideDigits outsideDigits
-
-        if (FastSet.length uniqueDigits) = 1 then
-            cells.inside
-            |> List.map (fun c -> c.position, Solved(FastSet.head uniqueDigits))
-        else
-            List.empty
+        SetMap.toSeq map
+        |> Seq.filter (fun (_, ps) -> FastSet.length ps = 1)
+        |> Seq.map (fun (d, ps) -> FastSet.head ps, Solved d)
+        |> Seq.toList
 
     let rule lookup =
         let changes =
-            List.allPairs AllGroups DigitSingles
-            |> List.collect (fun (group, combo) -> singleCellPencil group combo lookup)
+            AllGroups
+            |> List.collect (singleCellPencil lookup)
 
         { rule = "single-cell"; changes = changes }
 
