@@ -9,12 +9,16 @@ let AllRules =
       SingleDigit.rule
       SingleCell.rule
       SingleBox.rule
-      Tuple.nakedRule
-      Tuple.hiddenRule
+      Tuple.nakedPairsRule
+      Tuple.hiddenPairsRule
       Rectangle.uniqueRectangleRule
       Fish.xWingRule
       DigitChain.rule
+      Tuple.nakedTriplesRule
+      Tuple.hiddenTriplesRule
       BUG.rule
+      Tuple.nakedQuadsRule
+      Tuple.hiddenQuadsRule
       Fish.swordfishRule]
 
 let fixPencils puzzle =
