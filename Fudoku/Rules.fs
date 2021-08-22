@@ -104,8 +104,9 @@ module Tuple =
             cells.outside
             |> List.filter (cellContainsPencils commonDigits)
             |> List.map (fun c -> c.position, RemovePencils commonDigits)
+            |> (fun list -> cells.inside.Length, list)
         else
-            List.empty
+            0, List.empty
 
     let private solveHiddenPencils (cells: Combination<Cell>) =
         let len = cells.inside.Length
@@ -118,8 +119,9 @@ module Tuple =
            && cellsLinkedByDigits cells.inside uniqueDigits then
             cells.inside
             |> List.map (fun c -> c.position, RetainPencils uniqueDigits)
+            |> (fun list -> cells.inside.Length, list)
         else
-            List.empty
+            0, List.empty
 
     let private ruleTemplate solver title (lookup: CellFinder) =
         let combos =
@@ -133,13 +135,13 @@ module Tuple =
                     |> List.collect (findTupleCombinations 3 lookup)
             }
 
-        let changes =
+        let len, changes =
             combos
             |> Seq.map solver
-            |> Seq.tryFind (fun changes -> not (List.isEmpty changes))
-            |> Option.defaultValue []
+            |> Seq.tryFind (fun (_, changes) -> not (List.isEmpty changes))
+            |> Option.defaultValue (0, [])
 
-        { rule = title; changes = changes }
+        { rule = $"{title}-{len}"; changes = changes }
 
     let hiddenRule = ruleTemplate solveHiddenPencils "hidden-pencils"
     let nakedRule = ruleTemplate solveNakedPencils "naked-pencils"
