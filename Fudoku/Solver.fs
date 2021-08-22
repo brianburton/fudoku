@@ -10,9 +10,9 @@ let AllRules =
       @ [ Tuple.nakedRule ]
         @ [ Tuple.hiddenRule ]
           @ [ Rectangle.uniqueRectangleRule ]
-            @ Fish.XWingRules
+            @ [ Fish.xWingRule ]
               @ [ DigitChain.rule ]
-                @ Fish.SwordfishRules @ [ BUG.rule ]
+                @ [ Fish.swordfishRule ] @ [ BUG.rule ]
 
 let fixPencils puzzle =
     let x = applyRules (cellFinder puzzle) [ FixPencils.rule ]
