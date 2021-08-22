@@ -14,8 +14,8 @@ let AllRules =
       Rectangle.uniqueRectangleRule
       Fish.xWingRule
       DigitChain.rule
-      Fish.swordfishRule
-      BUG.rule ]
+      BUG.rule
+      Fish.swordfishRule]
 
 let fixPencils puzzle =
     let x = applyRules (cellFinder puzzle) [ FixPencils.rule ]
