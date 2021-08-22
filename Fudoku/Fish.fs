@@ -15,7 +15,7 @@ type Fish<'a> =
       fishOutside: 'a list
       fishAffected: 'a list }
 
-let lookupFishPositions (rowCombo: Combination<Digit>) (colCombo: Combination<Digit>) direction =
+let createPositionFish (rowCombo: Combination<Digit>) (colCombo: Combination<Digit>) direction =
     let inside =
         List.allPairs rowCombo.inside colCombo.inside
         |> List.map (fun (r, c) -> position r c)
@@ -38,7 +38,7 @@ let lookupFishPositions (rowCombo: Combination<Digit>) (colCombo: Combination<Di
       fishOutside = outside
       fishAffected = affected }
 
-let lookupFishCells2 (lookup: CellFinder) (fish: Fish<Position>) =
+let convertToCellFish (lookup: CellFinder) (fish: Fish<Position>) =
     { fishRows = fish.fishRows
       fishCols = fish.fishCols
       fishInside = fish.fishInside |> List.map lookup
@@ -95,14 +95,38 @@ let isValidFish positions rows cols =
     && allArePresent positions cols (fun p -> p.col)
     && allPositionsLinked positions
 
-let private makeFishCombos combos =
-    List.allPairs combos combos
-    |> List.allPairs [ RowFish; ColFish ]
-    |> List.map (fun (direction, (rows, cols)) -> lookupFishPositions rows cols direction)
+let private possibleDimensionsForGroup len (lookup: CellFinder) (group: Position list) =
+    let positions = findTuplePositions len lookup group
+    let rows = positions |> FastSet.map (fun p -> p.row)
+    let cols = positions |> FastSet.map (fun p -> p.col)
+    rows, cols
 
-let private XWingPositions = makeFishCombos DigitPairs
+let private possibleDimensionsForGroups (groups: Position list list) len (lookup: CellFinder) =
+    groups
+    |> Seq.ofList
+    |> Seq.map (possibleDimensionsForGroup len lookup)
+    |> Seq.fold (fun (ra, ca) (r, c) -> (FastSet.union ra r), (FastSet.union ca c)) (NoDigits, NoDigits)
 
-let private SwordfishPositions = makeFishCombos DigitTriples
+let private possibleFishForDirection direction (groups: Position list list) len (lookup: CellFinder) =
+    let rows, cols = possibleDimensionsForGroups groups len lookup
+
+    let rowCombos =
+        combinations len (FastSet.toList rows)
+        |> List.map comboOf
+
+    let colCombos =
+        combinations len (FastSet.toList cols)
+        |> List.map comboOf
+
+    Seq.allPairs rowCombos colCombos
+    |> Seq.map (fun (rs, cs) -> createPositionFish rs cs direction)
+    |> Seq.map (convertToCellFish lookup)
+
+let private allPossibleFish len (lookup: CellFinder) =
+    seq {
+        yield! possibleFishForDirection RowFish AllRows len lookup
+        yield! possibleFishForDirection ColFish AllCols len lookup
+    }
 
 let private solveFish (cells: Fish<Cell>) =
 
@@ -127,18 +151,14 @@ let private solveFish (cells: Fish<Cell>) =
         else
             []
 
-let private fishRuleTemplate (combos: Fish<Position> list) solver (title: string) (lookup: CellFinder) =
-    let positionFilter = positionsWithPencilsSet lookup
-
+let private ruleTemplate (title: string) (fishFinder: CellFinder -> Fish<Cell> seq) (lookup: CellFinder) =
     let changes =
-        Seq.ofList combos
-        |> Seq.filter (fun c -> FastSet.containsAll positionFilter c.fishInside)
-        |> Seq.map (lookupFishCells2 lookup)
-        |> Seq.map solver
+        fishFinder lookup
+        |> Seq.map solveFish
         |> Seq.tryFind (fun changes -> not (List.isEmpty changes))
         |> Option.defaultValue []
 
     { rule = title; changes = changes }
 
-let xWingRule = fishRuleTemplate XWingPositions solveFish "x-wing"
-let swordfishRule = fishRuleTemplate SwordfishPositions solveFish "swordfish"
+let xWingRule = ruleTemplate "x-wing" (allPossibleFish 2)
+let swordfishRule = ruleTemplate "swordfish" (allPossibleFish 3)

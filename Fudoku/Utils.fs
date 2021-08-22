@@ -27,7 +27,8 @@ let rec combinations len list =
         let merges = merge head suffixes
         List.append merges tails
 
-    if len = 1 then length1 ()
+    if List.length list < len then []
+    elif len = 1 then length1 ()
     elif len = list.Length then single ()
     else normal list.Head list.Tail
 

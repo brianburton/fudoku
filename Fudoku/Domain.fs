@@ -53,12 +53,13 @@ let AllDigits = [ One; Two; Three; Four; Five; Six; Seven; Eight; Nine ]
 
 let AllDigitsSet = AllDigits |> FastSet.ofSeq
 
+let NoDigits: FastSet<Digit> = FastSet.empty ()
+
 let comboOf2 group digits =
     let others = group |> List.except digits
     { inside = digits; outside = others }
 
-let comboOf digits : Combination<Digit> =
-    comboOf2 AllDigits digits
+let comboOf digits : Combination<Digit> = comboOf2 AllDigits digits
 
 let private createDigitCombos len = combinations len AllDigits |> List.map comboOf
 
@@ -99,6 +100,7 @@ let positions rows cols =
     |> List.map (fun (r, c) -> position r c)
 
 let AllPositions = positions AllDigits AllDigits
+let NoPositions: FastSet<Position> = FastSet.empty ()
 
 let combinationMapper (mapping: Digit -> Position) (combo: Combination<Digit>) : Combination<Position> =
     let posInside = combo.inside |> List.map mapping
@@ -224,7 +226,7 @@ let positionCombination (group: Position list) (combo: Combination<Digit>) =
 
     { inside = insideCells; outside = outsideCells }
 
-let lookupCellCombination2 (lookup: CellFinder) (combo: Combination<Position>)  =
+let lookupCellCombination2 (lookup: CellFinder) (combo: Combination<Position>) =
     let insideCells = combo.inside |> List.map lookup
     let outsideCells = combo.outside |> List.map lookup
     { inside = insideCells; outside = outsideCells }
@@ -244,23 +246,22 @@ let createDigitMap (group: Position list) (lookup: CellFinder) : SetMap<Digit, P
     |> List.collect cellPencilList
     |> SetMap.ofPairs
 
-let findTupleCombinations len (lookup: CellFinder) (group: Position list) =
+let findTuplePositions len (lookup: CellFinder) (group: Position list) =
     let lengthFilter ps =
         let psLen = FastSet.length ps
         (psLen >= 2) && (psLen <= len)
 
     let map = createDigitMap group lookup
 
-    let positions =
-        SetMap.toSeq map
-        |> Seq.map snd
-        |> Seq.filter lengthFilter
-        |> Seq.fold FastSet.union (FastSet.empty ())
-        |> FastSet.toList
+    SetMap.toSeq map
+    |> Seq.map snd
+    |> Seq.filter lengthFilter
+    |> Seq.fold FastSet.union NoPositions
 
-    if positions.Length < len then
-        []
-    else
-        combinations len positions
-        |> List.map (comboOf2 group)
-        |> List.map (lookupCellCombination2 lookup)
+let findTupleCombinations len (lookup: CellFinder) (group: Position list) =
+    let positions = findTuplePositions len lookup group
+
+    FastSet.toList positions
+    |> combinations len
+    |> List.map (comboOf2 group)
+    |> List.map (lookupCellCombination2 lookup)
