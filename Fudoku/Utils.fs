@@ -215,3 +215,5 @@ module SetMap =
     let ofPairs list =
         let folder map (k, v) = add k v map
         list |> List.fold folder (empty ())
+
+    let toSeq (SetMap setMap) = FastMap.toSeq setMap

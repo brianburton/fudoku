@@ -119,7 +119,7 @@ module Tuple =
         let uniqueDigits = FastSet.difference insideDigits outsideDigits
 
         if (FastSet.length uniqueDigits) = len
-           && uniqueDigits <> insideDigits
+           && not (FastSet.equals uniqueDigits insideDigits)
            && cellsLinkedByDigits cells.inside uniqueDigits then
             cells.inside
             |> List.map (fun c -> c.position, RetainPencils uniqueDigits)
@@ -127,12 +127,19 @@ module Tuple =
             List.empty
 
     let private ruleTemplate solver title (lookup: CellFinder) =
-        let positionFilter = positionsWithPencilsSet lookup
+        let combos =
+            seq {
+                yield!
+                    AllGroups
+                    |> List.collect (findTupleCombinations 2 lookup)
+
+                yield!
+                    AllGroups
+                    |> List.collect (findTupleCombinations 3 lookup)
+            }
 
         let changes =
-            Seq.ofList AllPositionCombos
-            |> Seq.filter (fun c -> FastSet.containsAll positionFilter c.inside)
-            |> Seq.map (lookupCellCombination2 lookup)
+            combos
             |> Seq.map solver
             |> Seq.tryFind (fun changes -> not (List.isEmpty changes))
             |> Option.defaultValue []

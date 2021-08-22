@@ -53,9 +53,12 @@ let AllDigits = [ One; Two; Three; Four; Five; Six; Seven; Eight; Nine ]
 
 let AllDigitsSet = AllDigits |> FastSet.ofSeq
 
-let comboOf digits : Combination<Digit> =
-    let others = AllDigits |> List.except digits
+let comboOf2 group digits =
+    let others = group |> List.except digits
     { inside = digits; outside = others }
+
+let comboOf digits : Combination<Digit> =
+    comboOf2 AllDigits digits
 
 let private createDigitCombos len = combinations len AllDigits |> List.map comboOf
 
@@ -240,3 +243,24 @@ let createDigitMap (group: Position list) (lookup: CellFinder) : SetMap<Digit, P
     |> List.map lookup
     |> List.collect cellPencilList
     |> SetMap.ofPairs
+
+let findTupleCombinations len (lookup: CellFinder) (group: Position list) =
+    let lengthFilter ps =
+        let psLen = FastSet.length ps
+        (psLen >= 2) && (psLen <= len)
+
+    let map = createDigitMap group lookup
+
+    let positions =
+        SetMap.toSeq map
+        |> Seq.map snd
+        |> Seq.filter lengthFilter
+        |> Seq.fold FastSet.union (FastSet.empty ())
+        |> FastSet.toList
+
+    if positions.Length < len then
+        []
+    else
+        combinations len positions
+        |> List.map (comboOf2 group)
+        |> List.map (lookupCellCombination2 lookup)
