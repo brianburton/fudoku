@@ -74,7 +74,7 @@ let diffPuzzles pz1 pz2 =
     |> List.filter (fun (_, a, b) -> a <> b)
     |> List.map (fun (p, a, b) -> { diffPosition = p; before = a.value; after = b.value })
 
-let positionsWithPencilsSet (lookup:CellFinder) =
+let positionsWithPencilsSet (lookup: CellFinder) =
     let hasPencils cell =
         match cell.value with
         | Pencils ds -> FastSet.length ds >= 2
@@ -85,3 +85,12 @@ let positionsWithPencilsSet (lookup:CellFinder) =
     |> Seq.filter hasPencils
     |> Seq.map (fun c -> c.position)
     |> FastSet.ofSeq
+
+let isSolved (Puzzle puzzle) =
+    FastMap.toSeq puzzle
+    |> Seq.map snd
+    |> Seq.forall
+        (fun cell ->
+            match cell.value with
+            | Answer _ -> true
+            | _ -> false)

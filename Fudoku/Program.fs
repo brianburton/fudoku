@@ -6,7 +6,7 @@ open Fudoku.Solver
 open Fudoku.Puzzle
 open Fudoku.PuzzleIO
 
-let printResult (prev:Puzzle) (step: SolutionStep) =
+let printResult (prev: Puzzle) (step: SolutionStep) =
     let printPencilDiffs before after =
         let extra =
             if FastSet.isProperSuperset before after then
@@ -19,15 +19,9 @@ let printResult (prev:Puzzle) (step: SolutionStep) =
     let rec printDiffs diffs =
         let printDiff diff tail =
             match diff with
-            | { diffPosition = p
-                before = _
-                after = Answer d } -> printfn $"   {p}: Solved {digitToString d}"
-            | { diffPosition = p
-                before = Pencils b
-                after = Pencils a } -> printfn $"   {p}: {printPencilDiffs b a}"
-            | { diffPosition = p
-                before = b
-                after = a } -> printfn $"   {p}: ??? {b}->{a}"
+            | { diffPosition = p; before = _; after = Answer d } -> printfn $"   {p}: Solved {digitToString d}"
+            | { diffPosition = p; before = Pencils b; after = Pencils a } -> printfn $"   {p}: {printPencilDiffs b a}"
+            | { diffPosition = p; before = b; after = a } -> printfn $"   {p}: ??? {b}->{a}"
 
             printDiffs tail
 
@@ -40,6 +34,12 @@ let printResult (prev:Puzzle) (step: SolutionStep) =
     printDiffs diffs
     printfn $"%s{puzzleToString step.puzzle}"
     step.puzzle
+
+let printSolved puzzle =
+    if (isSolved puzzle) then
+        printfn "Puzzle is SOLVED!"
+    else
+        printfn ("Puzzle unsolved.")
 
 exception BadArguments of string
 
@@ -57,9 +57,10 @@ let main args =
     match puzzle with
     | Ok barePuzzle ->
         let initializedPuzzle = fixPencils barePuzzle
+
         solvePuzzle initializedPuzzle
         |> Seq.fold printResult initializedPuzzle
-        |> ignore
+        |> printSolved
     | Error e -> printfn $"error: %s{e}"
 
     0 // return an integer exit code
