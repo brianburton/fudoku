@@ -15,6 +15,29 @@ type Fish<'a> =
       fishOutside: 'a list
       fishAffected: 'a list }
 
+let jumpOrder (a, b) = if b >= a then (a, b) else (b, a)
+
+let rowSorted (positions: Position seq) = positions |> Seq.sort
+
+let colSorted (positions: Position seq) =
+    positions
+    |> Seq.sortBy (fun p -> { row = p.col; col = p.row })
+
+let allPossibleJumps (positionList: List<Position>) =
+    let rowJumps =
+        rowSorted positionList
+        |> Seq.pairwise
+        |> Seq.filter (fun (a, b) -> a.row = b.row)
+
+    let colJumps =
+        colSorted positionList
+        |> Seq.pairwise
+        |> Seq.filter (fun (a, b) -> a.col = b.col)
+
+    Seq.append rowJumps colJumps
+    |> Seq.collect (fun (a, b) -> [ (a, b); (b, a) ])
+    |> SetMap.ofPairs
+
 let createPositionFish (rowCombo: Combination<Digit>) (colCombo: Combination<Digit>) direction =
     let inside =
         List.allPairs rowCombo.inside colCombo.inside
@@ -59,30 +82,30 @@ let adjacentPositionsInGroup (skip: Set<Position>) (center: Position) (group: Po
 
     loop group []
 
-let rec allPositionsLinked (positions: Position list) : bool =
+let allPositionsLinked (positions: Position list) : bool =
+    let validJumps = allPossibleJumps positions
 
-    let rec solveForPos (skip: Set<Position>) (path: Position list) (current: Position) =
+    let rec solveForPos (remaining: FastSet<Position>) (path: Position list) (current: Position) =
         let newPath = path @ [ current ]
-        let newSkip = Set.add current skip
 
-        if newSkip.Count = positions.Length then
+        let newRemaining = FastSet.remove current remaining
+
+        if FastSet.isEmpty newRemaining then
             true
         else
-            let rowNeighbors =
-                positions
-                |> List.filter (fun p -> p.row = current.row)
-                |> adjacentPositionsInGroup newSkip current
+            let neighbors =
+                validJumps
+                |> SetMap.get current
+                |> FastSet.intersect newRemaining
 
-            let colNeighbors =
-                positions
-                |> List.filter (fun p -> p.col = current.col)
-                |> adjacentPositionsInGroup newSkip current
+            neighbors
+            |> FastSet.toSeq
+            |> Seq.exists (solveForPos newRemaining newPath)
 
-            List.append rowNeighbors colNeighbors
-            |> List.exists (solveForPos newSkip newPath)
+    let startRemaining = positions |> FastSet.ofSeq
 
     positions
-    |> List.forall (solveForPos Set.empty [])
+    |> List.forall (solveForPos startRemaining  [])
 
 let allArePresent positions expected mapper =
     let digits = positions |> List.map mapper |> Set.ofList
@@ -93,7 +116,7 @@ let allArePresent positions expected mapper =
 let isValidFish positions rows cols =
     allArePresent positions rows (fun p -> p.row)
     && allArePresent positions cols (fun p -> p.col)
-    && allPositionsLinked positions
+    //&& allPositionsLinked positions
 
 let private possibleDimensionsForGroup len (lookup: CellFinder) (group: Position list) =
     let positions = findTuplePositions len lookup group

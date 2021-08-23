@@ -37,8 +37,7 @@ let private includesAnswer result =
             | _ -> false
 
     result.changes
-    |> Seq.tryFind (fun (_, ch) -> isAnswer ch)
-    |> Option.isSome
+    |> Seq.exists (fun (_, ch) -> isAnswer ch)
 
 let private findStepChanges fixNeeded currentPuzzle =
     let rules = selectRules fixNeeded

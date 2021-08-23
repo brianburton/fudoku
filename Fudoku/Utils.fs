@@ -84,7 +84,15 @@ module FastMap =
 
     let keys m = m |> toSeq |> Seq.map fst
 
-type FastSet<'T when 'T: equality> = private FastSet of FastMap<'T, bool>
+type FastSet<'T when 'T: equality> =
+    private FastSet of FastMap<'T, bool>
+        override this.ToString() =
+            let str = match this with
+                        | FastSet m ->
+                            FastMap.keys m
+                            |> Seq.map (fun k -> $"{k}")
+                            |> Seq.fold (fun s k -> $"{s},{k}") ""
+            $"({str.Substring(1)})"
 
 module FastSet =
     let toSeq (FastSet set) = FastMap.keys set
@@ -215,6 +223,6 @@ module SetMap =
 
     let ofPairs list =
         let folder map (k, v) = add k v map
-        list |> List.fold folder (empty ())
+        list |> Seq.fold folder (empty ())
 
     let toSeq (SetMap setMap) = FastMap.toSeq setMap
