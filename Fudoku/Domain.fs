@@ -187,26 +187,27 @@ let starterCell p = unsolvedCell p AllDigitsSet
 let cellPencils c =
     match c.value with
     | Pencils ds -> ds
-    | Answer _ -> FastSet.empty ()
+    | Answer _ -> NoDigits
 
 let cellDigit c =
     match c.value with
-    | Pencils _ -> FastSet.empty ()
+    | Pencils _ -> NoDigits
     | Answer d -> FastSet.singleton d
 
 let cellContainsPencil d c =
-    let pencils = cellPencils c
-    FastSet.contains d pencils
+    match c.value with
+    | Pencils cds -> FastSet.contains d cds
+    | Answer _ -> false
 
 let cellContainsPencils ds c =
-    let pencils = cellPencils c
-    let common = FastSet.intersect ds pencils
-    (FastSet.length common) > 0
+    match c.value with
+    | Pencils cds -> FastSet.overlaps cds ds
+    | Answer _ -> false
 
 let groupPencils group =
     group
     |> List.map cellPencils
-    |> List.fold FastSet.union (FastSet.empty ())
+    |> List.fold FastSet.union NoDigits
 
 let lookupCellCombination (group: Position list) (combo: Combination<Digit>) (lookup: CellFinder) =
     let posMapper =

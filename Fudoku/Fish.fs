@@ -74,12 +74,15 @@ let private solveFish (cells: Fish<Cell>) =
                 |> List.filter (cellContainsPencil digit)
                 |> List.map (fun c -> c.position)
 
-            if isValidFish positions cells.fishRows cells.fishCols then
-                cells.fishAffected
-                |> List.filter (cellContainsPencil digit)
-                |> List.map (fun c -> (c.position, RemovePencils digitSet))
-            else
-                loop tail
+            let changes =
+                if isValidFish positions cells.fishRows cells.fishCols then
+                    cells.fishAffected
+                    |> List.filter (cellContainsPencil digit)
+                    |> List.map (fun c -> (c.position, RemovePencils digitSet))
+                else
+                    []
+
+            if changes.Length > 0 then changes else loop tail
 
     loop (FastSet.toList uniquePencils)
 
