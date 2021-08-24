@@ -55,33 +55,6 @@ let isValidFish positions rows cols =
     allArePresent positions rows (fun p -> p.row)
     && allArePresent positions cols (fun p -> p.col)
 
-let private possibleDimensionsForGroup len (lookup: CellFinder) (group: Position list) =
-    let positions = findTuplePositions len lookup group
-    let rows = positions |> FastSet.map (fun p -> p.row)
-    let cols = positions |> FastSet.map (fun p -> p.col)
-    rows, cols
-
-let private possibleDimensionsForGroups (groups: Position list list) len (lookup: CellFinder) =
-    groups
-    |> Seq.ofList
-    |> Seq.map (possibleDimensionsForGroup len lookup)
-    |> Seq.fold (fun (ra, ca) (r, c) -> (FastSet.union ra r), (FastSet.union ca c)) (NoDigits, NoDigits)
-
-let private possibleFishForDirection direction (groups: Position list list) len (lookup: CellFinder) =
-    let rows, cols = possibleDimensionsForGroups groups len lookup
-
-    let rowCombos =
-        combinations len (FastSet.toList rows)
-        |> List.map comboOf
-
-    let colCombos =
-        combinations len (FastSet.toList cols)
-        |> List.map comboOf
-
-    Seq.allPairs rowCombos colCombos
-    |> Seq.map (fun (rs, cs) -> createPositionFish rs cs direction)
-    |> Seq.map (convertToCellFish lookup)
-
 let private solveFish (cells: Fish<Cell>) =
 
     let insidePencils = cells.fishInside |> groupPencils
