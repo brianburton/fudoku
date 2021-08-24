@@ -71,12 +71,12 @@ let private solveFish (cells: Fish<Cell>) =
 
             let positions =
                 cells.fishInside
-                |> List.filter (cellContainsPencils digitSet)
+                |> List.filter (cellContainsPencil digit)
                 |> List.map (fun c -> c.position)
 
             if isValidFish positions cells.fishRows cells.fishCols then
                 cells.fishAffected
-                |> List.filter (cellContainsPencils digitSet)
+                |> List.filter (cellContainsPencil digit)
                 |> List.map (fun c -> (c.position, RemovePencils digitSet))
             else
                 loop tail

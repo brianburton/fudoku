@@ -194,6 +194,10 @@ let cellDigit c =
     | Pencils _ -> FastSet.empty ()
     | Answer d -> FastSet.singleton d
 
+let cellContainsPencil d c =
+    let pencils = cellPencils c
+    FastSet.contains d pencils
+
 let cellContainsPencils ds c =
     let pencils = cellPencils c
     let common = FastSet.intersect ds pencils
