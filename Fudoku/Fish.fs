@@ -15,29 +15,6 @@ type Fish<'a> =
       fishOutside: 'a list
       fishAffected: 'a list }
 
-let jumpOrder (a, b) = if b >= a then (a, b) else (b, a)
-
-let rowSorted (positions: Position seq) = positions |> Seq.sort
-
-let colSorted (positions: Position seq) =
-    positions
-    |> Seq.sortBy (fun p -> { row = p.col; col = p.row })
-
-let allPossibleJumps (positionList: List<Position>) =
-    let rowJumps =
-        rowSorted positionList
-        |> Seq.pairwise
-        |> Seq.filter (fun (a, b) -> a.row = b.row)
-
-    let colJumps =
-        colSorted positionList
-        |> Seq.pairwise
-        |> Seq.filter (fun (a, b) -> a.col = b.col)
-
-    Seq.append rowJumps colJumps
-    |> Seq.collect (fun (a, b) -> [ (a, b); (b, a) ])
-    |> SetMap.ofPairs
-
 let createPositionFish (rowCombo: Combination<Digit>) (colCombo: Combination<Digit>) direction =
     let inside =
         List.allPairs rowCombo.inside colCombo.inside
@@ -68,45 +45,6 @@ let convertToCellFish (lookup: CellFinder) (fish: Fish<Position>) =
       fishOutside = fish.fishOutside |> List.map lookup
       fishAffected = fish.fishAffected |> List.map lookup }
 
-let adjacentPositionsInGroup (skip: Set<Position>) (center: Position) (group: Position list) : Position list =
-    let add x found = if (Set.contains x skip) then found else found @ [ x ]
-
-    let rec loop remaining found =
-        match remaining with
-        | [] -> found
-        | [ _ ] -> found
-        | x :: y :: _ when x = center -> add y found
-        | x :: [ y ] when y = center -> add x found
-        | x :: y :: z :: _ when y = center -> found |> add x |> add z
-        | _ :: tail -> loop tail found
-
-    loop group []
-
-let allPositionsLinked (positions: Position list) : bool =
-    let validJumps = allPossibleJumps positions
-
-    let rec solveForPos (remaining: FastSet<Position>) (path: Position list) (current: Position) =
-        let newPath = path @ [ current ]
-
-        let newRemaining = FastSet.remove current remaining
-
-        if FastSet.isEmpty newRemaining then
-            true
-        else
-            let neighbors =
-                validJumps
-                |> SetMap.get current
-                |> FastSet.intersect newRemaining
-
-            neighbors
-            |> FastSet.toSeq
-            |> Seq.exists (solveForPos newRemaining newPath)
-
-    let startRemaining = positions |> FastSet.ofSeq
-
-    positions
-    |> List.forall (solveForPos startRemaining  [])
-
 let allArePresent positions expected mapper =
     let digits = positions |> List.map mapper |> Set.ofList
 
@@ -116,7 +54,6 @@ let allArePresent positions expected mapper =
 let isValidFish positions rows cols =
     allArePresent positions rows (fun p -> p.row)
     && allArePresent positions cols (fun p -> p.col)
-    //&& allPositionsLinked positions
 
 let private possibleDimensionsForGroup len (lookup: CellFinder) (group: Position list) =
     let positions = findTuplePositions len lookup group
@@ -145,12 +82,6 @@ let private possibleFishForDirection direction (groups: Position list list) len 
     |> Seq.map (fun (rs, cs) -> createPositionFish rs cs direction)
     |> Seq.map (convertToCellFish lookup)
 
-let private allPossibleFish len (lookup: CellFinder) =
-    seq {
-        yield! possibleFishForDirection RowFish AllRows len lookup
-        yield! possibleFishForDirection ColFish AllCols len lookup
-    }
-
 let private solveFish (cells: Fish<Cell>) =
 
     let insidePencils = cells.fishInside |> groupPencils
@@ -159,20 +90,25 @@ let private solveFish (cells: Fish<Cell>) =
 
     let uniquePencils = FastSet.difference insidePencils outsidePencils
 
-    if (FastSet.length uniquePencils) <> 1 then
-        []
-    else
-        let positions =
-            cells.fishInside
-            |> List.filter (cellContainsPencils uniquePencils)
-            |> List.map (fun c -> c.position)
+    let rec loop digits =
+        match digits with
+        | [] -> []
+        | digit :: tail ->
+            let digitSet = (FastSet.singleton digit)
 
-        if isValidFish positions cells.fishRows cells.fishCols then
-            cells.fishAffected
-            |> List.filter (cellContainsPencils uniquePencils)
-            |> List.map (fun c -> (c.position, RemovePencils uniquePencils))
-        else
-            []
+            let positions =
+                cells.fishInside
+                |> List.filter (cellContainsPencils digitSet)
+                |> List.map (fun c -> c.position)
+
+            if isValidFish positions cells.fishRows cells.fishCols then
+                cells.fishAffected
+                |> List.filter (cellContainsPencils digitSet)
+                |> List.map (fun c -> (c.position, RemovePencils digitSet))
+            else
+                loop tail
+
+    loop (FastSet.toList uniquePencils)
 
 let private ruleTemplate (title: string) (fishFinder: CellFinder -> Fish<Cell> seq) (lookup: CellFinder) =
     let changes =
@@ -182,6 +118,69 @@ let private ruleTemplate (title: string) (fishFinder: CellFinder -> Fish<Cell> s
         |> Option.defaultValue []
 
     { rule = title; changes = changes }
+
+let findCandidates len posMap =
+    let ysForXs xs =
+        xs
+        |> List.map (fun x -> SetMap.get x posMap)
+        |> List.fold FastSet.union NoDigits
+        |> FastSet.toList
+
+    let allXs = SetMap.keys posMap |> List.ofSeq
+    let combosOfXs = combinations len allXs
+
+    combosOfXs
+    |> List.map (fun xs -> (xs, (ysForXs xs)))
+    |> List.filter
+        (fun (_, ys) ->
+            let numYs = List.length ys
+            numYs >= 2 && numYs <= len)
+    |> List.toSeq
+
+let private createRowFish len positions =
+    let allRowsMap =
+        FastSet.toSeq positions
+        |> Seq.map (fun pos -> (pos.row, pos.col))
+        |> SetMap.ofPairs
+
+    let allRowFish = findCandidates len allRowsMap
+
+    allRowFish
+    |> Seq.map
+        (fun (rows, cols) ->
+            let rowCombo = comboOf2 AllDigits rows
+            let colCombo = comboOf2 AllDigits cols
+            createPositionFish rowCombo colCombo RowFish)
+
+let private createColFish len positions =
+    let allColsMap =
+        FastSet.toSeq positions
+        |> Seq.map (fun pos -> (pos.col, pos.row))
+        |> SetMap.ofPairs
+
+    let allColFish = findCandidates len allColsMap
+
+    allColFish
+    |> Seq.map
+        (fun (cols, rows) ->
+            let rowCombo = comboOf2 AllDigits rows
+            let colCombo = comboOf2 AllDigits cols
+            createPositionFish rowCombo colCombo ColFish)
+
+let findAllCandidates len allDigitsMap lookup =
+    SetMap.toSeq allDigitsMap
+    |> Seq.collect
+        (fun (_, positions) ->
+            seq {
+                yield! createRowFish len positions
+                yield! createColFish len positions
+            }
+            |> Seq.map (convertToCellFish lookup))
+
+let private allPossibleFish len lookup =
+    let allDigitsMap = createDigitMap AllPositions lookup
+    let candidates = findAllCandidates len allDigitsMap lookup
+    candidates
 
 let xWingRule = ruleTemplate "x-wing" (allPossibleFish 2)
 let swordfishRule = ruleTemplate "swordfish" (allPossibleFish 3)

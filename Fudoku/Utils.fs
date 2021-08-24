@@ -201,6 +201,9 @@ module SetMap =
 
         setMap |> FastMap.change key remover |> SetMap
 
+    let removeKey key (SetMap setMap) =
+        setMap |> FastMap.remove key |> SetMap
+
     let get key (SetMap setMap) =
         FastMap.tryFind key setMap
         |> Option.defaultValue (FastSet.empty ())

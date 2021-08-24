@@ -1,6 +1,5 @@
 module Fudoku.Solver
 
-open Domain
 open Puzzle
 
 type SolutionStep = { rule: string; puzzle: Puzzle }
