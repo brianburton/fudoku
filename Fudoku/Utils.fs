@@ -85,14 +85,17 @@ module FastMap =
     let keys m = m |> toSeq |> Seq.map fst
 
 type FastSet<'T when 'T: equality> =
-    private FastSet of FastMap<'T, bool>
-        override this.ToString() =
-            let str = match this with
-                        | FastSet m ->
-                            FastMap.keys m
-                            |> Seq.map (fun k -> $"{k}")
-                            |> Seq.fold (fun s k -> $"{s},{k}") ""
-            $"({str.Substring(1)})"
+    private
+    | FastSet of FastMap<'T, bool>
+    override this.ToString() =
+        let str =
+            match this with
+            | FastSet m ->
+                FastMap.keys m
+                |> Seq.map (fun k -> $"{k}")
+                |> Seq.fold (fun s k -> $"{s},{k}") ""
+
+        $"({str.Substring(1)})"
 
 module FastSet =
     let toSeq (FastSet set) = FastMap.keys set
@@ -155,7 +158,10 @@ module FastSet =
 
     let map f set = toSeq set |> Seq.map f |> ofSeq
 
-    let bind f set = toSeq set |> Seq.collect (fun x -> toSeq (f x)) |> ofSeq
+    let bind f set =
+        toSeq set
+        |> Seq.collect (fun x -> toSeq (f x))
+        |> ofSeq
 
     let filter f set =
         let extra = toSeq set |> Seq.filter (fun x -> not (f x))
@@ -201,8 +207,39 @@ module SetMap =
 
         setMap |> FastMap.change key remover |> SetMap
 
-    let removeKey key (SetMap setMap) =
-        setMap |> FastMap.remove key |> SetMap
+    let assign key values (SetMap setMap) =
+        if FastSet.isEmpty values then
+            FastMap.remove key setMap
+        else
+            FastMap.add key values setMap
+        |> SetMap
+
+    let filter predicate (SetMap setMap) =
+        let folder map (k,vs) =
+            if predicate k vs then
+                map
+            else
+                FastMap.remove k map
+
+        FastMap.toSeq setMap
+        |> Seq.fold folder setMap
+        |> SetMap
+
+    let map mapping (SetMap setMap) =
+        FastMap.toSeq setMap
+        |> Seq.map (fun (k,vs) -> k,(mapping vs))
+        |> Seq.filter (fun (_,vs) -> FastSet.length vs > 0)
+        |> FastMap.ofSeq
+        |> SetMap
+
+    let map2 mapping (SetMap setMap) =
+        FastMap.toSeq setMap
+        |> Seq.map (fun (k,vs) -> mapping k vs)
+        |> Seq.filter (fun (_,vs) -> FastSet.length vs > 0)
+        |> FastMap.ofSeq
+        |> SetMap
+
+    let removeKey key (SetMap setMap) = setMap |> FastMap.remove key |> SetMap
 
     let get key (SetMap setMap) =
         FastMap.tryFind key setMap
@@ -215,7 +252,11 @@ module SetMap =
         |> Option.map FastSet.length
         |> Option.defaultValue 0
 
-    let keys (SetMap setMap) = setMap |> FastMap.toList |> List.map fst
+    let keys (SetMap setMap) =
+        setMap
+        |> FastMap.toSeq
+        |> Seq.map fst
+        |> List.ofSeq
 
     let folder splitter =
         fun setMap raw ->
@@ -229,3 +270,9 @@ module SetMap =
         list |> Seq.fold folder (empty ())
 
     let toSeq (SetMap setMap) = FastMap.toSeq setMap
+
+    let ofSeq seq =
+        seq
+        |> Seq.filter (fun (_,values) -> FastSet.length values > 0)
+        |> FastMap.ofSeq
+        |> SetMap

@@ -251,16 +251,18 @@ let createDigitMap (group: Position list) (lookup: CellFinder) : SetMap<Digit, P
     |> List.collect cellPencilList
     |> SetMap.ofPairs
 
-let findTuplePositions len (lookup: CellFinder) (group: Position list) =
-    let lengthFilter ps =
-        let psLen = FastSet.length ps
-        (psLen >= 2) && (psLen <= len)
+let validTupleLength max actual = (actual >= 2) && (actual <= max)
 
+let validTupleList len ps = validTupleLength len (List.length ps)
+
+let validTupleSet len ps = validTupleLength len (FastSet.length ps)
+
+let findTuplePositions len (lookup: CellFinder) (group: Position list) =
     let map = createDigitMap group lookup
 
     SetMap.toSeq map
     |> Seq.map snd
-    |> Seq.filter lengthFilter
+    |> Seq.filter (validTupleSet len)
     |> Seq.fold FastSet.union NoPositions
 
 let findTupleCombinations len (lookup: CellFinder) (group: Position list) =

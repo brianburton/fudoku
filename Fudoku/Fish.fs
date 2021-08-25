@@ -102,15 +102,17 @@ let findCandidates len posMap =
         |> List.fold FastSet.union NoDigits
         |> FastSet.toList
 
-    let allXs = SetMap.keys posMap |> List.ofSeq
+    let allXs =
+        SetMap.toSeq posMap
+        |> Seq.filter (fun (_, ys) -> validTupleSet len ys)
+        |> Seq.map fst
+        |> List.ofSeq
+
     let combosOfXs = combinations len allXs
 
     combosOfXs
     |> List.map (fun xs -> (xs, (ysForXs xs)))
-    |> List.filter
-        (fun (_, ys) ->
-            let numYs = List.length ys
-            numYs >= 2 && numYs <= len)
+    |> List.filter (fun (_, ys) -> validTupleList len ys)
     |> List.toSeq
 
 let private createRowFish len positions =

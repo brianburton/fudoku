@@ -10,26 +10,25 @@ let rotateRectangle r =
     match r with
     | { topLeft = tl; topRight = tr; bottomLeft = bl; bottomRight = br } -> { topLeft = bl; topRight = tl; bottomLeft = br; bottomRight = tr }
 
-let twoBoxRectangles =
-    let cornersToRect corners =
-        match corners with
-        | tl :: tr :: bl :: [ br ] -> { topLeft = tl; topRight = tr; bottomLeft = bl; bottomRight = br }
-        | _ -> invalidArg "corners" $"should have 4 values but had {corners.Length}"
+let isTwoBoxer rect =
+    NoDigits
+    |> FastSet.add (boxContainingPos rect.topLeft)
+    |> FastSet.add (boxContainingPos rect.topRight)
+    |> FastSet.add (boxContainingPos rect.bottomLeft)
+    |> FastSet.add (boxContainingPos rect.bottomRight)
+    |> FastSet.length = 2
 
-    let isTwoBoxer rect =
-        Set.empty
-        |> Set.add (boxContainingPos rect.topLeft)
-        |> Set.add (boxContainingPos rect.topRight)
-        |> Set.add (boxContainingPos rect.bottomLeft)
-        |> Set.add (boxContainingPos rect.bottomRight)
-        |> Set.count = 2
+let cornersToRect (corners: 'a list) =
+    { topLeft = corners.[0]
+      topRight = corners.[1]
+      bottomLeft = corners.[2]
+      bottomRight = corners.[3] }
 
-    let pairs = combinations 2 AllDigits
-
-    List.allPairs pairs pairs
-    |> List.map (fun (rows, cols) -> positions rows cols)
-    |> List.map cornersToRect
-    |> List.filter isTwoBoxer
+let isValidRect r =
+    r.topLeft.row = r.topRight.row
+    && r.bottomLeft.row = r.bottomRight.row
+    && r.topLeft.col = r.bottomLeft.col
+    && r.topRight.col = r.bottomRight.col
 
 type CellSummary = { cellPos: Position; cellPencils: FastSet<Digit> }
 
@@ -42,6 +41,26 @@ let summarizeRectangle (lookup: CellFinder) (posRect: Rectangle<Position>) =
           topRight = summarizeCell lookup tl
           bottomLeft = summarizeCell lookup br
           bottomRight = summarizeCell lookup tr }
+
+let intersectTwoSetsInMap setMap a b =
+    let setA = SetMap.get a setMap
+    let setB = SetMap.get b setMap
+    FastSet.intersect setA setB
+
+let activeRectangles digitMap =
+    let digits = SetMap.keys digitMap |> Seq.toList
+    let pairs = combinations 2 digits
+
+    pairs
+    |> List.map (fun ds -> intersectTwoSetsInMap digitMap ds.[0] ds.[1])
+    |> List.filter (fun s -> FastSet.length s >= 4)
+    |> List.map FastSet.toList
+    |> List.map List.sort
+    |> List.collect (combinations 4)
+    |> Seq.ofList
+    |> Seq.map cornersToRect
+    |> Seq.filter isValidRect
+    |> Seq.filter isTwoBoxer
 
 let solveUniqueRectangle lookup rectangle =
     let singleCellWithExtraPencils pencils c d =
@@ -102,12 +121,6 @@ let solveUniqueRectangle lookup rectangle =
         else
             solve a c d
 
-let allCornersInSet (positions: FastSet<Position>) (rect: Rectangle<Position>) =
-    FastSet.contains rect.topLeft positions
-    && FastSet.contains rect.topRight positions
-    && FastSet.contains rect.bottomLeft positions
-    && FastSet.contains rect.bottomRight positions
-
 let rotationsOf rect =
     seq {
         let mutable r = rect
@@ -118,16 +131,11 @@ let rotationsOf rect =
     }
 
 let uniqueRectangleRule (lookup: CellFinder) : RuleResult =
-    let possiblePositions =
-        AllPositions
-        |> List.map lookup
-        |> List.filter (fun cell -> (FastSet.length (cellPencils cell)) >= 2)
-        |> List.map (fun cell -> cell.position)
-        |> FastSet.ofSeq
+    let activeDigitMap = createDigitMap AllPositions lookup
+    let candidateRectangles = activeRectangles activeDigitMap
 
     let result =
-        Seq.ofList twoBoxRectangles
-        |> Seq.filter (allCornersInSet possiblePositions)
+        candidateRectangles
         |> Seq.map (summarizeRectangle lookup)
         |> Seq.collect rotationsOf
         |> Seq.map (solveUniqueRectangle lookup)
