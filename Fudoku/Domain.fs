@@ -209,17 +209,6 @@ let groupPencils group =
     |> List.map cellPencils
     |> List.fold FastSet.union NoDigits
 
-let lookupCellCombination (group: Position list) (combo: Combination<Digit>) (lookup: CellFinder) =
-    let posMapper =
-        let map = List.zip AllDigits group |> FastMap.ofList
-        (fun digit -> FastMap.find digit map)
-
-    let digitMapper pos = posMapper pos |> lookup
-    let insideCells = combo.inside |> List.map digitMapper
-    let outsideCells = combo.outside |> List.map digitMapper
-
-    { inside = insideCells; outside = outsideCells }
-
 let positionCombination (group: Position list) (combo: Combination<Digit>) =
     let posMapper =
         let map = List.zip AllDigits group |> FastMap.ofList
@@ -235,6 +224,10 @@ let lookupCellCombination2 (lookup: CellFinder) (combo: Combination<Position>) =
     let insideCells = combo.inside |> List.map lookup
     let outsideCells = combo.outside |> List.map lookup
     { inside = insideCells; outside = outsideCells }
+
+let lookupCellCombination (group: Position list) (combo: Combination<Digit>) (lookup: CellFinder) =
+    positionCombination group combo
+    |> lookupCellCombination2 lookup
 
 let AllPositionCombos =
     List.allPairs AllGroups MultiDigitCombinations
