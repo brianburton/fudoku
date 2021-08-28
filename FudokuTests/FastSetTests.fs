@@ -1,7 +1,7 @@
 module Fudoku.Tests.FastSet
 
 open NUnit.Framework
-open Fudoku.Utils
+open Fudoku
 
 let EmptySet: FastSet<int> = FastSet.empty ()
 let EmptyList: List<int> = []

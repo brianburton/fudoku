@@ -6,6 +6,9 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <Compile Include="FastMap.fs" />
+        <Compile Include="FastSet.fs" />
+        <Compile Include="SetMap.fs" />
         <Compile Include="Utils.fs" />
         <Compile Include="Domain.fs" />
         <Compile Include="Puzzle.fs" />

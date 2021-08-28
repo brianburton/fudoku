@@ -3,7 +3,7 @@ module Fudoku.Tests.FishTests
 open NUnit.Framework
 open Fudoku.Domain
 open Fudoku.Fish
-open Fudoku.Utils
+open Fudoku
 
 [<Test>]
 let ``findCandidates test`` () =

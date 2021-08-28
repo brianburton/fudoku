@@ -4,7 +4,7 @@ open NUnit.Framework
 open Fudoku.Tests.Common
 open Fudoku.Domain
 open Fudoku.Puzzle
-open Fudoku.Utils
+open Fudoku
 
 [<SetUp>]
 let Setup () = ()

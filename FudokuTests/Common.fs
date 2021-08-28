@@ -1,6 +1,6 @@
 module Fudoku.Tests.Common
 
-open Fudoku.Utils
+open Fudoku
 open Fudoku.Domain
 open Fudoku.Puzzle
 
