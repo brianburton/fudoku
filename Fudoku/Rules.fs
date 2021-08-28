@@ -249,7 +249,7 @@ module XYWing =
             |> Seq.map (fun s -> s.cellPos)
             |> FastSet.ofSeq
 
-        let isActivePosition = FastSet.toFilter activePositions
+        let isActivePosition pos = FastSet.contains pos activePositions
         let isActiveCell cell = FastSet.contains cell.cellPos activePositions
 
         let digitNeighbors p d =
@@ -258,11 +258,8 @@ module XYWing =
                 colNeighbors p
                 boxNeighbors p
             }
-            |> Seq.map
-                (fun ns ->
-                    ns
-                    |> List.map (summarizeCell lookup)
-                    |> List.filter (fun n -> FastSet.contains d n.cellPencils))
+            |> Seq.map (List.map (summarizeCell lookup))
+            |> Seq.map (List.filter (fun n -> FastSet.contains d n.cellPencils))
             |> Seq.filter (fun ns -> List.length ns = 1)
             |> Seq.map List.head
             |> Seq.filter isActiveCell
@@ -270,10 +267,7 @@ module XYWing =
         let firstNonEmptyChanges listOfChanges =
             listOfChanges
             |> Seq.tryFind (fun changes -> not (List.isEmpty changes))
-            |> (fun o ->
-                match o with
-                | Some changes -> changes
-                | None -> [])
+            |> Option.defaultValue []
 
         let third a c =
             let removeDigit = FastSet.intersect a.cellPencils c.cellPencils
