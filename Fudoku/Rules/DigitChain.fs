@@ -2,7 +2,6 @@ module Fudoku.DigitChain
 
 open Domain
 open Puzzle
-open Utils
 
 let jumpsFrom (source: Position) (positions: FastSet<Position>) : FastSet<Position * Position> =
     let jumpsInGroup group =
