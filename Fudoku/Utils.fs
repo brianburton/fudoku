@@ -44,24 +44,25 @@ let listToOption list = if List.isEmpty list then None else Some list
 
 let intersectLists (xs: 'a seq) (ys: 'a seq) = xs.Intersect(ys) |> List.ofSeq
 
-type FastMap<'K, 'V when 'K: equality and 'V: equality> = PersistentHashMap<'K, 'V>
+type FastMap<'K, 'V when 'K: equality and 'V: equality> = private FastMap of PersistentHashMap<'K, 'V>
 
 module FastMap =
-    let empty () = PersistentHashMap.empty
+    let empty () = FastMap PersistentHashMap.empty
 
     let singleton k v =
         PersistentHashMap.empty
         |> PersistentHashMap.add k v
+        |> FastMap
 
-    let containsKey k m = PersistentHashMap.containsKey k m
+    let containsKey k (FastMap m) = PersistentHashMap.containsKey k m
 
-    let add k v m = PersistentHashMap.add k v m
+    let add k v (FastMap m) = PersistentHashMap.add k v m|> FastMap
 
-    let remove k m = PersistentHashMap.remove k m
+    let remove k (FastMap m) = PersistentHashMap.remove k m|> FastMap
 
-    let find k m = PersistentHashMap.find k m
+    let find k (FastMap m) = PersistentHashMap.find k m
 
-    let tryFind k m =
+    let tryFind k (FastMap m) =
         if PersistentHashMap.containsKey k m then
             Some(PersistentHashMap.find k m)
         else
@@ -72,13 +73,13 @@ module FastMap =
         | Some v -> add k v m
         | None -> remove k m
 
-    let length m = PersistentHashMap.length m
+    let length (FastMap m) = PersistentHashMap.length m
 
-    let ofSeq = PersistentHashMap.ofSeq
+    let ofSeq seq = seq|>PersistentHashMap.ofSeq|>FastMap
 
     let ofList = ofSeq
 
-    let toSeq = PersistentHashMap.toSeq
+    let toSeq (FastMap m) = m|>PersistentHashMap.toSeq
 
     let toList m = m |> toSeq |> List.ofSeq
 

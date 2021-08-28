@@ -29,7 +29,7 @@ let addToPuzzle (pz: Puzzle) (cells: Cell list) : Puzzle =
 
     cells |> List.fold addCell pz
 
-let isCompleteSolution (s: PuzzleSolution) = s.Count = AllPositions.Length
+let isCompleteSolution (s: PuzzleSolution) = (FastMap.length s) = AllPositions.Length
 
 let cellFinder (Puzzle pz) = fun p -> FastMap.find p pz
 
