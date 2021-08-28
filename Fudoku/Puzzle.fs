@@ -94,3 +94,14 @@ let isSolved (Puzzle puzzle) =
             match cell.value with
             | Answer _ -> true
             | _ -> false)
+
+let isValidSolution (Puzzle puzzle) =
+    let allDigitsInGroup group =
+        group
+        |> List.map (fun p -> FastMap.find p puzzle)
+        |> List.map cellDigit
+        |> List.fold FastSet.union NoDigits
+
+    AllGroups
+    |> List.map allDigitsInGroup
+    |> List.forall (FastSet.equals AllDigitsSet)

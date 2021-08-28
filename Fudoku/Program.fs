@@ -37,9 +37,10 @@ let printResult prevPuzzle (index, step) =
 
 let printSolved puzzle =
     if (isSolved puzzle) then
-        printfn "Puzzle is SOLVED!"
+        let validity = if isValidSolution puzzle then " And VALID!" else " <<<BAD-SOLUTION>>>"
+        printfn $"Puzzle is SOLVED!%s{validity}"
     else
-        printfn ("Puzzle unsolved.")
+        printfn "Puzzle unsolved."
 
 exception BadArguments of string
 
