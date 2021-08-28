@@ -287,7 +287,7 @@ module XYWing =
             |> List.filter (fun n -> FastSet.overlaps removeDigit n.cellPencils)
             |> List.map (fun n -> n.cellPos, RemovePencils removeDigit)
 
-        let second a b d1 =
+        let second a d1 b =
             let cds =
                 FastSet.union a.cellPencils b.cellPencils
                 |> FastSet.remove d1
@@ -296,22 +296,20 @@ module XYWing =
 
             digitNeighbors b.cellPos d2
             |> Seq.filter (fun c -> FastSet.equals c.cellPencils cds)
-            |> Seq.map (fun c -> third a c)
-            |> firstNonEmptyChanges
+            |> Seq.map (third a)
 
         let first a =
             let solveForDigit d1 =
                 digitNeighbors a.cellPos d1
-                |> Seq.map (fun b -> second a b d1)
+                |> Seq.collect (second a d1)
 
             a.cellPencils
             |> FastSet.toSeq
             |> Seq.collect solveForDigit
-            |> firstNonEmptyChanges
 
         let changes =
             activeCells
-            |> Seq.map (fun a -> first a)
+            |> Seq.collect first
             |> firstNonEmptyChanges
 
         { rule = "xy-wing"; changes = changes }
