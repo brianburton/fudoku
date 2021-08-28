@@ -2,7 +2,18 @@ namespace Fudoku
 
 open FSharpx.Collections
 
-type FastMap<'K, 'V when 'K: equality and 'V: equality> = private FastMap of PersistentHashMap<'K, 'V>
+type FastMap<'K, 'V when 'K: equality and 'V: equality> =
+    private
+    | FastMap of PersistentHashMap<'K, 'V>
+    override this.ToString() =
+        match this with
+        | FastMap m ->
+            let str =
+                PersistentHashMap.toSeq m
+                |> Seq.map (fun (k, v) -> $"({k},{v})")
+                |> Seq.fold (fun s p -> $"{s},{p}") ""
+
+            $"[{str.Substring(1)}]"
 
 module FastMap =
     let empty () = FastMap PersistentHashMap.empty

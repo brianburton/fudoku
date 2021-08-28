@@ -178,7 +178,11 @@ let allNeighbors =
 
     memoize impl
 
-let commonNeighbors p1 p2 = intersectLists (allNeighbors p1) (allNeighbors p2)
+let commonNeighborsPaired =
+    let impl (a, b) = intersectLists (allNeighbors a) (allNeighbors b)
+    memoize impl
+
+let commonNeighbors p1 p2 = commonNeighborsPaired (p1, p2)
 
 let solvedCell p d = { position = p; value = Answer d }
 
