@@ -6,7 +6,7 @@ open Fudoku.Solver
 open Fudoku.Puzzle
 open Fudoku.PuzzleIO
 
-let printResult (prev: Puzzle) (step: SolutionStep) =
+let printResult prevPuzzle (index, step) =
     let printPencilDiffs before after =
         let extra =
             if FastSet.isProperSuperset before after then
@@ -29,8 +29,8 @@ let printResult (prev: Puzzle) (step: SolutionStep) =
         | diff :: tail -> printDiff diff tail
         | _ -> ()
 
-    let diffs = diffPuzzles (cellFinder prev) (cellFinder step.puzzle)
-    printfn $"Rule: %s{step.rule}"
+    let diffs = diffPuzzles (cellFinder prevPuzzle) (cellFinder step.puzzle)
+    printfn $"Step %d{index}: %s{step.rule}"
     printDiffs diffs
     printfn $"%s{puzzleToString step.puzzle}"
     step.puzzle
@@ -59,6 +59,7 @@ let main args =
         let initializedPuzzle = fixPencils barePuzzle
 
         solvePuzzle initializedPuzzle
+        |> Seq.indexed
         |> Seq.fold printResult initializedPuzzle
         |> printSolved
     | Error e -> printfn $"error: %s{e}"
