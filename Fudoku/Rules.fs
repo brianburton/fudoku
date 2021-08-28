@@ -235,3 +235,83 @@ module BUG =
             |> Option.toList
 
         { rule = "BUG"; changes = changes }
+
+module XYWing =
+    let rule lookup =
+        let activeCells =
+            AllPositions
+            |> List.map (summarizeCell lookup)
+            |> List.filter (fun s -> FastSet.length s.cellPencils = 2)
+            |> Seq.ofList
+
+        let activePositions =
+            activeCells
+            |> Seq.map (fun s -> s.cellPos)
+            |> FastSet.ofSeq
+
+        let isActivePosition = FastSet.toFilter activePositions
+        let isActiveCell cell = FastSet.contains cell.cellPos activePositions
+
+        let digitNeighbors p d =
+            seq {
+                rowNeighbors p
+                colNeighbors p
+                boxNeighbors p
+            }
+            |> Seq.map
+                (fun ns ->
+                    ns
+                    |> List.map (summarizeCell lookup)
+                    |> List.filter (fun n -> FastSet.contains d n.cellPencils))
+            |> Seq.filter (fun ns -> List.length ns = 1)
+            |> Seq.map List.head
+            |> Seq.filter isActiveCell
+
+        let firstNonEmptyChanges listOfChanges =
+            listOfChanges
+            |> Seq.tryFind (fun changes -> not (List.isEmpty changes))
+            |> (fun o ->
+                match o with
+                | Some changes -> changes
+                | None -> [])
+
+        let third a c =
+            let removeDigit = FastSet.intersect a.cellPencils c.cellPencils
+
+            let neighbors =
+                commonNeighbors a.cellPos c.cellPos
+                |> List.filter isActivePosition
+                |> List.map (summarizeCell lookup)
+
+            neighbors
+            |> List.filter (fun n -> FastSet.overlaps removeDigit n.cellPencils)
+            |> List.map (fun n -> n.cellPos, RemovePencils removeDigit)
+
+        let second a b d1 =
+            let cds =
+                FastSet.union a.cellPencils b.cellPencils
+                |> FastSet.remove d1
+
+            let d2 = FastSet.remove d1 b.cellPencils |> FastSet.head
+
+            digitNeighbors b.cellPos d2
+            |> Seq.filter (fun c -> FastSet.equals c.cellPencils cds)
+            |> Seq.map (fun c -> third a c)
+            |> firstNonEmptyChanges
+
+        let first a =
+            let solveForDigit d1 =
+                digitNeighbors a.cellPos d1
+                |> Seq.map (fun b -> second a b d1)
+
+            a.cellPencils
+            |> FastSet.toSeq
+            |> Seq.collect solveForDigit
+            |> firstNonEmptyChanges
+
+        let changes =
+            activeCells
+            |> Seq.map (fun a -> first a)
+            |> firstNonEmptyChanges
+
+        { rule = "xy-wing"; changes = changes }

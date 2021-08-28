@@ -30,10 +30,6 @@ let isValidRect r =
     && r.topLeft.col = r.bottomLeft.col
     && r.topRight.col = r.bottomRight.col
 
-type CellSummary = { cellPos: Position; cellPencils: FastSet<Digit> }
-
-let summarizeCell lookup pos = { cellPos = pos; cellPencils = cellPencils (lookup pos) }
-
 let summarizeRectangle (lookup: CellFinder) (posRect: Rectangle<Position>) =
     match posRect with
     | { topLeft = tl; topRight = tr; bottomLeft = bl; bottomRight = br } ->

@@ -49,6 +49,8 @@ type CellFinder = Position -> Cell
 
 type Combination<'T> = { inside: 'T list; outside: 'T list }
 
+type CellSummary = { cellPos: Position; cellPencils: FastSet<Digit> }
+
 let AllDigits = [ One; Two; Three; Four; Five; Six; Seven; Eight; Nine ]
 
 let AllDigitsSet = AllDigits |> FastSet.ofSeq
@@ -208,6 +210,8 @@ let groupPencils group =
     group
     |> List.map cellPencils
     |> List.fold FastSet.union NoDigits
+
+let summarizeCell lookup pos = { cellPos = pos; cellPencils = cellPencils (lookup pos) }
 
 let positionCombination (group: Position list) (combo: Combination<Digit>) =
     let posMapper =

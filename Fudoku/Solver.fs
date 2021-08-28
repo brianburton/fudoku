@@ -9,6 +9,7 @@ let AllRules =
       SingleDigit.rule
       SingleCell.rule
       SingleBox.rule
+      XYWing.rule
       Tuple.nakedPairsRule
       Tuple.hiddenPairsRule
       Rectangle.uniqueRectangleRule
