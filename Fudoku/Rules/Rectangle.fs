@@ -61,7 +61,6 @@ let activeRectangles digitMap =
 let solveUniqueRectangle lookup rectangle =
     let singleCellWithExtraPencils pencils c d =
         if (FastSet.equals pencils c.cellPencils)
-           && (FastSet.equals pencils (FastSet.intersect d.cellPencils pencils))
            && (FastSet.length d.cellPencils) <> 2 then
             Some [ (d.cellPos, RemovePencils pencils) ]
         else
@@ -70,8 +69,7 @@ let solveUniqueRectangle lookup rectangle =
     let twoCellsSharingOneExtraDigit pencils c d =
         let extraDigits = FastSet.difference c.cellPencils pencils
 
-        if (FastSet.notEquals (FastSet.intersect pencils c.cellPencils) pencils)
-           || (FastSet.notEquals c.cellPencils d.cellPencils)
+        if (FastSet.notEquals c.cellPencils d.cellPencils)
            || (FastSet.length extraDigits) <> 1 then
             None
         else
@@ -86,9 +84,7 @@ let solveUniqueRectangle lookup rectangle =
             FastSet.union c.cellPencils d.cellPencils
             |> (fun u -> FastSet.difference u pencils)
 
-        if (FastSet.notEquals (FastSet.intersect pencils c.cellPencils) pencils)
-           || (FastSet.notEquals (FastSet.intersect pencils d.cellPencils) pencils)
-           || (FastSet.length extraDigits) <> 2 then
+        if (FastSet.length extraDigits) <> 2 then
             None
         else
             let commonPositions = commonNeighbors c.cellPos d.cellPos
@@ -106,25 +102,21 @@ let solveUniqueRectangle lookup rectangle =
 
     // http://sudopedia.enjoysudoku.com/Uniqueness_Test.html#Uniqueness_Test_4
     let twoCellsPencilNotInNeighbors pencils c d =
-        if (FastSet.notEquals (FastSet.intersect pencils c.cellPencils) pencils)
-           || (FastSet.notEquals (FastSet.intersect pencils d.cellPencils) pencils) then
+        let commonPositions = commonNeighbors c.cellPos d.cellPos
+
+        let commonPencils =
+            commonPositions
+            |> List.map lookup
+            |> List.map cellPencils
+            |> List.fold FastSet.union NoDigits
+
+        let presentPencils = FastSet.intersect commonPencils pencils
+
+        if FastSet.length presentPencils <> 1 then
             None
         else
-            let commonPositions = commonNeighbors c.cellPos d.cellPos
-
-            let commonPencils =
-                commonPositions
-                |> List.map lookup
-                |> List.map cellPencils
-                |> List.fold FastSet.union NoDigits
-
-            let presentPencils = FastSet.intersect commonPencils pencils
-
-            if FastSet.length presentPencils <> 1 then
-                None
-            else
-                Some [ (c.cellPos, RemovePencils presentPencils)
-                       (d.cellPos, RemovePencils presentPencils) ]
+            Some [ (c.cellPos, RemovePencils presentPencils)
+                   (d.cellPos, RemovePencils presentPencils) ]
 
     let solve a c d =
         singleCellWithExtraPencils a.cellPencils c d
