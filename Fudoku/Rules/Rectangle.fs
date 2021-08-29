@@ -58,26 +58,28 @@ let activeRectangles digitMap =
     |> Seq.filter isValidRect
     |> Seq.filter isTwoBoxer
 
+let listOrElseWith fn list = if List.isEmpty list then fn () else list
+
+// http://sudopedia.enjoysudoku.com/Uniqueness_Test.html
 let solveUniqueRectangle lookup rectangle =
     let singleCellWithExtraPencils pencils c d =
         if (FastSet.equals pencils c.cellPencils)
            && (FastSet.length d.cellPencils) <> 2 then
-            Some [ (d.cellPos, RemovePencils pencils) ]
+            [ (d.cellPos, RemovePencils pencils) ]
         else
-            None
+            []
 
     let twoCellsSharingOneExtraDigit pencils c d =
         let extraDigits = FastSet.difference c.cellPencils pencils
 
         if (FastSet.notEquals c.cellPencils d.cellPencils)
            || (FastSet.length extraDigits) <> 1 then
-            None
+            []
         else
             commonNeighbors c.cellPos d.cellPos
             |> List.map lookup
             |> List.filter (fun x -> FastSet.isSuperset (cellPencils x) extraDigits)
             |> List.map (fun x -> (x.position, RemovePencils extraDigits))
-            |> listToOption
 
     let twoCellsActingAsPair pencils c d =
         let extraDigits =
@@ -85,7 +87,7 @@ let solveUniqueRectangle lookup rectangle =
             |> (fun u -> FastSet.difference u pencils)
 
         if (FastSet.length extraDigits) <> 2 then
-            None
+            []
         else
             let commonPositions = commonNeighbors c.cellPos d.cellPos
 
@@ -98,9 +100,7 @@ let solveUniqueRectangle lookup rectangle =
                     |> List.map lookup
                     |> List.filter (fun x -> (FastSet.overlaps (cellPencils x) extraDigits))
                     |> List.map (fun x -> (x.position, RemovePencils extraDigits)))
-            |> listToOption
 
-    // http://sudopedia.enjoysudoku.com/Uniqueness_Test.html#Uniqueness_Test_4
     let twoCellsPencilNotInNeighbors pencils c d =
         let commonPositions = commonNeighbors c.cellPos d.cellPos
 
@@ -113,22 +113,22 @@ let solveUniqueRectangle lookup rectangle =
         let presentPencils = FastSet.intersect commonPencils pencils
 
         if FastSet.length presentPencils <> 1 then
-            None
+            []
         else
-            Some [ (c.cellPos, RemovePencils presentPencils)
-                   (d.cellPos, RemovePencils presentPencils) ]
+            [ (c.cellPos, RemovePencils presentPencils)
+              (d.cellPos, RemovePencils presentPencils) ]
 
     let solve a c d =
         singleCellWithExtraPencils a.cellPencils c d
-        |> Option.orElseWith (fun () -> twoCellsSharingOneExtraDigit a.cellPencils c d)
-        |> Option.orElseWith (fun () -> twoCellsActingAsPair a.cellPencils c d)
-        |> Option.orElseWith (fun () -> twoCellsPencilNotInNeighbors a.cellPencils c d)
+        |> listOrElseWith (fun () -> twoCellsSharingOneExtraDigit a.cellPencils c d)
+        |> listOrElseWith (fun () -> twoCellsActingAsPair a.cellPencils c d)
+        |> listOrElseWith (fun () -> twoCellsPencilNotInNeighbors a.cellPencils c d)
 
     match rectangle with
     | { topLeft = a; topRight = b; bottomLeft = c; bottomRight = d } ->
         if (FastSet.length a.cellPencils) <> 2
            || (FastSet.notEquals b.cellPencils a.cellPencils) then
-            None
+            []
         else
             solve a c d
 
@@ -145,18 +145,12 @@ let uniqueRectangleRule (lookup: CellFinder) : RuleResult =
     let activeDigitMap = createDigitMap AllPositions lookup
     let candidateRectangles = activeRectangles activeDigitMap
 
-    let result =
+    let changes =
         candidateRectangles
         |> Seq.map (summarizeRectangle lookup)
         |> Seq.collect rotationsOf
         |> Seq.map (solveUniqueRectangle lookup)
-        |> Seq.collect Option.toList
-        |> Seq.truncate 1
-        |> Seq.toList
-
-    let changes =
-        match result with
-        | list :: _ -> list
-        | _ -> []
+        |> Seq.tryFind (fun changes -> List.length changes > 0)
+        |> Option.defaultValue []
 
     { rule = "unique-rectangle"; changes = changes }
