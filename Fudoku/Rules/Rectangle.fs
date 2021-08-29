@@ -104,10 +104,33 @@ let solveUniqueRectangle lookup rectangle =
                     |> List.map (fun x -> (x.position, RemovePencils extraDigits)))
             |> listToOption
 
+    // http://sudopedia.enjoysudoku.com/Uniqueness_Test.html#Uniqueness_Test_4
+    let twoCellsPencilNotInNeighbors pencils c d =
+        if (FastSet.notEquals (FastSet.intersect pencils c.cellPencils) pencils)
+           || (FastSet.notEquals (FastSet.intersect pencils d.cellPencils) pencils) then
+            None
+        else
+            let commonPositions = commonNeighbors c.cellPos d.cellPos
+
+            let commonPencils =
+                commonPositions
+                |> List.map lookup
+                |> List.map cellPencils
+                |> List.fold FastSet.union NoDigits
+
+            let presentPencils = FastSet.intersect commonPencils pencils
+
+            if FastSet.length presentPencils <> 1 then
+                None
+            else
+                Some [ (c.cellPos, RemovePencils presentPencils)
+                       (d.cellPos, RemovePencils presentPencils) ]
+
     let solve a c d =
         singleCellWithExtraPencils a.cellPencils c d
         |> Option.orElseWith (fun () -> twoCellsSharingOneExtraDigit a.cellPencils c d)
         |> Option.orElseWith (fun () -> twoCellsActingAsPair a.cellPencils c d)
+        |> Option.orElseWith (fun () -> twoCellsPencilNotInNeighbors a.cellPencils c d)
 
     match rectangle with
     | { topLeft = a; topRight = b; bottomLeft = c; bottomRight = d } ->
