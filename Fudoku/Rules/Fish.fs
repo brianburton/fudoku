@@ -161,3 +161,4 @@ let private allPossibleFish len lookup =
 
 let xWingRule = ruleTemplate "x-wing" (allPossibleFish 2)
 let swordfishRule = ruleTemplate "swordfish" (allPossibleFish 3)
+let jellyfishRule = ruleTemplate "jellyfish" (allPossibleFish 4)

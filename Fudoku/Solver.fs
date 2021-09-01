@@ -17,7 +17,8 @@ let AllRules =
       (Tuple.solveTuple 3)
       BUG.rule
       (Tuple.solveTuple 4)
-      Fish.swordfishRule ]
+      Fish.swordfishRule
+      Fish.jellyfishRule ]
 
 let fixPencils puzzle =
     let x = applyRules (cellFinder puzzle) [ FixPencils.fixPencilsRule ]
