@@ -63,6 +63,8 @@ module SetMap =
         |> Option.map FastSet.length
         |> Option.defaultValue 0
 
+    let length (SetMap setMap) = FastMap.length setMap
+
     let keys (SetMap setMap) =
         setMap
         |> FastMap.toSeq
@@ -87,3 +89,17 @@ module SetMap =
         |> Seq.filter (fun (_, values) -> FastSet.length values > 0)
         |> FastMap.ofSeq
         |> SetMap
+
+    let intersectKeys ks setMap =
+        match Seq.toList ks with
+        | [] -> FastSet.empty ()
+        | [k] -> get k setMap
+        | k::tail ->
+            tail
+            |> Seq.map (fun kk -> get kk setMap)
+            |> Seq.fold FastSet.intersect (get k setMap)
+
+    let unionKeys ks setMap =
+        ks
+        |> Seq.map (fun k -> get k setMap)
+        |> Seq.fold FastSet.union (FastSet.empty ())

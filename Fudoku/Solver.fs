@@ -10,16 +10,13 @@ let AllRules =
       SingleCell.rule
       SingleBox.rule
       XYWing.rule
-      Tuple.nakedPairsRule
-      Tuple.hiddenPairsRule
+      (Tuple.solveTuple 2)
       Rectangle.uniqueRectangleRule
       Fish.xWingRule
       DigitChain.rule
-      Tuple.nakedTriplesRule
-      Tuple.hiddenTriplesRule
+      (Tuple.solveTuple 3)
       BUG.rule
-      Tuple.nakedQuadsRule
-      Tuple.hiddenQuadsRule
+      (Tuple.solveTuple 4)
       Fish.swordfishRule ]
 
 let fixPencils puzzle =

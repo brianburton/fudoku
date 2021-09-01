@@ -1,90 +1,78 @@
 module Fudoku.Tuple
 
+open Utils
 open Domain
 open Puzzle
 
-let cellsLinkedByDigits (cells: Cell list) (digits: FastSet<Digit>) : bool =
-    let cellsWithPencil digit cells =
-        cells
-        |> List.filter (fun c -> FastSet.contains digit (cellPencils c))
-        |> List.map (fun c -> digit, c)
+let solveTuple size lookup =
+    let toRule name changes =
+        let suffix =
+            match size with
+            | 2 -> "pair"
+            | 3 -> "triple"
+            | 4 -> "quad"
+            | _ -> $"tuple-{size}"
 
-    let rec solveForCell (remainingCells: Cell list) (remainingDigits: FastSet<Digit>) (current: Cell) =
-        let tryNextCell digit cell =
-            let newRemainingCells = List.except [ cell ] remainingCells
-            let newRemainingDigits = FastSet.remove digit remainingDigits
-            solveForCell newRemainingCells newRemainingDigits cell
+        { rule = $"{name}-{suffix}"; changes = changes }
 
-        let tryRemainingCells =
-            let currentDigits = (cellPencils current)
+    let solveGroup group =
+        let summaries =
+            group
+            |> List.map (summarizeCell lookup)
+            |> List.filter (fun s -> FastSet.length s.cellPencils > 0)
 
-            let availableDigits = FastSet.intersect currentDigits remainingDigits
+        let groupDigitMap = createDigitMap group lookup
 
-            availableDigits
-            |> FastSet.toList
-            |> List.collect (fun d -> (cellsWithPencil d remainingCells))
-            |> List.exists (fun (d, c) -> tryNextCell d c)
+        let groupDigits =
+            SetMap.toSeq groupDigitMap
+            |> Seq.collect (fun (d, ps) -> if FastSet.length ps > 1 then [ d ] else [])
+            |> List.ofSeq
 
-        if remainingCells.IsEmpty
-           && (FastSet.isEmpty remainingDigits) then
-            true
-        elif remainingCells.IsEmpty
-             || (FastSet.isEmpty remainingDigits) then
-            false
-        else
-            tryRemainingCells
+        let digitCombinations = combinations size groupDigits |> Seq.ofList
 
-    List.exists (solveForCell cells digits) cells
+        let solveForDigits digits =
+            let digitSet = FastSet.ofSeq digits
 
-let private solveNakedPencils (cells: Combination<Cell>) =
-    let len = cells.inside.Length
-    let insideDigits = groupPencils cells.inside
-    let outsideDigits = groupPencils cells.outside
-    let commonDigits = FastSet.intersect insideDigits outsideDigits
+            let nakeds =
+                summaries
+                |> List.filter (fun s -> FastSet.isSuperset digitSet s.cellPencils)
 
-    if (FastSet.length insideDigits) = len
-       && (FastSet.length commonDigits) > 0
-       && cellsLinkedByDigits cells.inside insideDigits then
-        cells.outside
-        |> List.filter (cellContainsPencils commonDigits)
-        |> List.map (fun c -> c.position, RemovePencils commonDigits)
-    else
-        List.empty
+            if List.length nakeds = size then
+                // this is a naked tuple
+                let nakedPositions =
+                    nakeds
+                    |> List.map (fun s -> s.cellPos)
+                    |> FastSet.ofSeq
 
-let private solveHiddenPencils (cells: Combination<Cell>) =
-    let len = cells.inside.Length
-    let insideDigits = groupPencils cells.inside
-    let outsideDigits = groupPencils cells.outside
-    let uniqueDigits = FastSet.difference insideDigits outsideDigits
+                let others =
+                    summaries
+                    |> List.filter (fun s -> not (FastSet.contains s.cellPos nakedPositions))
+                    |> List.filter (fun s -> FastSet.overlaps digitSet s.cellPencils)
 
-    if (FastSet.length uniqueDigits) = len
-       && not (FastSet.equals uniqueDigits insideDigits)
-       && cellsLinkedByDigits cells.inside uniqueDigits then
-        cells.inside
-        |> List.map (fun c -> c.position, RetainPencils uniqueDigits)
-    else
-        List.empty
+                others
+                |> List.map (fun s -> s.cellPos, RemovePencils digitSet)
+                |> toRule "naked"
+            else
+                let supersets =
+                    summaries
+                    |> List.filter (fun s -> FastSet.overlaps s.cellPencils digitSet)
 
-let private allTupleCombinationsOfLength len (lookup: CellFinder) =
+                if List.length supersets = size then
+                    // this is a hidden tuple
+                    let changes =
+                        supersets
+                        |> List.map (fun s -> { s with cellPencils = FastSet.difference s.cellPencils digitSet })
+                        |> List.filter (fun s -> FastSet.length s.cellPencils > 0)
+                        |> List.map (fun s -> s.cellPos, RemovePencils s.cellPencils)
+
+                    changes |> toRule "hidden"
+                else
+                    toRule "no-tuple" []
+
+        digitCombinations |> Seq.map solveForDigits
+
     AllGroups
-    |> List.collect (findTupleCombinations len lookup)
     |> Seq.ofList
-
-let private ruleTemplate solver title finder lookup =
-    let changes =
-        finder lookup
-        |> Seq.map solver
-        |> Seq.tryFind (fun changes -> not (List.isEmpty changes))
-        |> Option.defaultValue []
-
-    { rule = title; changes = changes }
-
-let hiddenPairsRule = ruleTemplate solveHiddenPencils "hidden-pairs" (allTupleCombinationsOfLength 2)
-
-let hiddenTriplesRule =
-    ruleTemplate solveHiddenPencils "hidden-triples" (allTupleCombinationsOfLength 3)
-
-let hiddenQuadsRule = ruleTemplate solveHiddenPencils "hidden-quads" (allTupleCombinationsOfLength 4)
-let nakedPairsRule = ruleTemplate solveNakedPencils "naked-pairs" (allTupleCombinationsOfLength 2)
-let nakedTriplesRule = ruleTemplate solveNakedPencils "naked-triples" (allTupleCombinationsOfLength 3)
-let nakedQuadsRule = ruleTemplate solveNakedPencils "naked-quads" (allTupleCombinationsOfLength 4)
+    |> Seq.collect solveGroup
+    |> Seq.tryFind (fun result -> List.length result.changes > 0)
+    |> Option.defaultValue (toRule "no-tuple" [])
