@@ -125,8 +125,8 @@ let private createRowFish len positions =
     allRowFish
     |> Seq.map
         (fun (rows, cols) ->
-            let rowCombo = comboOf2 AllDigits rows
-            let colCombo = comboOf2 AllDigits cols
+            let rowCombo = groupCombo AllDigits rows
+            let colCombo = groupCombo AllDigits cols
             createPositionFish rowCombo colCombo RowFish)
 
 let private createColFish len positions =
@@ -140,8 +140,8 @@ let private createColFish len positions =
     allColFish
     |> Seq.map
         (fun (cols, rows) ->
-            let rowCombo = comboOf2 AllDigits rows
-            let colCombo = comboOf2 AllDigits cols
+            let rowCombo = groupCombo AllDigits rows
+            let colCombo = groupCombo AllDigits cols
             createPositionFish rowCombo colCombo ColFish)
 
 let findAllCandidates len allDigitsMap lookup =

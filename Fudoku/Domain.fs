@@ -57,20 +57,11 @@ let AllDigitsSet = AllDigits |> FastSet.ofSeq
 
 let NoDigits: FastSet<Digit> = FastSet.empty ()
 
-let comboOf2 group digits =
+let groupCombo group digits =
     let others = group |> List.except digits
     { inside = digits; outside = others }
 
-let comboOf digits : Combination<Digit> = comboOf2 AllDigits digits
-
-let private createDigitCombos len = combinations len AllDigits |> List.map comboOf
-
-let DigitSingles = createDigitCombos 1
-let DigitPairs = createDigitCombos 2
-let DigitTriples = createDigitCombos 3
-let DigitQuads = createDigitCombos 4
-
-let MultiDigitCombinations = DigitPairs @ DigitTriples @ DigitQuads
+let digitCombo digits : Combination<Digit> = groupCombo AllDigits digits
 
 let segment d =
     match d with
@@ -91,9 +82,9 @@ let segmentDigits s =
     | SegThree -> [ Seven; Eight; Nine ]
 
 let SingleSegmentDigitTriples =
-    [ comboOf (segmentDigits SegOne)
-      comboOf (segmentDigits SegTwo)
-      comboOf (segmentDigits SegThree) ]
+    [ digitCombo (segmentDigits SegOne)
+      digitCombo (segmentDigits SegTwo)
+      digitCombo (segmentDigits SegThree) ]
 
 let position r c = { row = r; col = c }
 
@@ -237,10 +228,6 @@ let lookupCellCombination (group: Position list) (combo: Combination<Digit>) (lo
     positionCombination group combo
     |> lookupCellCombination2 lookup
 
-let AllPositionCombos =
-    List.allPairs AllGroups MultiDigitCombinations
-    |> List.map (fun (group, combo) -> positionCombination group combo)
-
 let cellPencilList cell =
     cellPencils cell
     |> FastSet.toList
@@ -271,5 +258,5 @@ let findTupleCombinations len (lookup: CellFinder) (group: Position list) =
 
     FastSet.toList positions
     |> combinations len
-    |> List.map (comboOf2 group)
+    |> List.map (groupCombo group)
     |> List.map (lookupCellCombination2 lookup)
