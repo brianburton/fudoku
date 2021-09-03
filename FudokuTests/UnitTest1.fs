@@ -69,69 +69,9 @@ let hiddenPairTest () =
 
     let expected = [ (position One One), retained; (position One Two), retained ]
 
-    let actual = Fudoku.Tuple.hiddenPairsRule (cellFinder before)
+    let actual = Tuple.solveTuple 2 (cellFinder before)
 
     Assert.AreEqual(expected, actual.changes)
-
-[<Test>]
-let cellsLinkedByDigitsTest () =
-    Assert.AreEqual(true, Fudoku.Tuple.cellsLinkedByDigits [ (unsolvedCellRC Four Five [ One; Two ]) ] (FastSet.ofSeq [ One ]))
-
-    Assert.AreEqual(
-        true,
-        Fudoku.Tuple.cellsLinkedByDigits
-            [ (unsolvedCellRC Four Five [ One; Two ])
-              (unsolvedCellRC Four Six [ One; Two ]) ]
-            (FastSet.ofSeq [ One; Two ])
-    )
-
-    Assert.AreEqual(
-        true, // 7-> 5 -> 6 -> 7
-        Fudoku.Tuple.cellsLinkedByDigits
-            [ (unsolvedCellRC Four Five [ One; Two ])
-              (unsolvedCellRC Four Six [ Two; Three ])
-              (unsolvedCellRC Four Seven [ One; Three ]) ]
-            (FastSet.ofSeq [ One; Two; Three ])
-    )
-
-    Assert.AreEqual(
-        true, // 8 -> 5 -> 6 -> 7 -> 8
-        Fudoku.Tuple.cellsLinkedByDigits
-            [ (unsolvedCellRC Four Five [ One; Two; Nine ])
-              (unsolvedCellRC Four Six [ Two; Three; Eight ])
-              (unsolvedCellRC Four Seven [ Three; Four; Seven ])
-              (unsolvedCellRC Four Eight [ One; Four; Three ]) ]
-            (FastSet.ofSeq [ One; Two; Three; Four ])
-    )
-
-    Assert.AreEqual(
-        true, // 7 -> 8 -> 5 -> 6
-        Fudoku.Tuple.cellsLinkedByDigits
-            [ (unsolvedCellRC Four Five [ One; Two; Nine ])
-              (unsolvedCellRC Four Six [ One; Two; Eight ])
-              (unsolvedCellRC Four Seven [ Three; Four; Seven ])
-              (unsolvedCellRC Four Eight [ One; Four; Three ]) ]
-            (FastSet.ofSeq [ One; Two; Three; Four ])
-    )
-
-    Assert.AreEqual(
-        true,
-        Fudoku.Tuple.cellsLinkedByDigits
-            [ (unsolvedCellRC Four Five [ One; Two ])
-              (unsolvedCellRC Four Six [ One; Two ])
-              (unsolvedCellRC Four Seven [ Two; Three ]) ]
-            (FastSet.ofSeq [ One; Two; Three ])
-    )
-
-    Assert.AreEqual(
-        false,
-        Fudoku.Tuple.cellsLinkedByDigits
-            [ (unsolvedCellRC Four Five [ One; Two ])
-              (unsolvedCellRC Four Six [ One; Two ])
-              (unsolvedCellRC Four Seven [ Three; Four ])
-              (unsolvedCellRC Four Eight [ Three; Four ]) ]
-            (FastSet.ofSeq [ One; Two; Three; Four ])
-    )
 
 [<Test>]
 let setMaps () =
