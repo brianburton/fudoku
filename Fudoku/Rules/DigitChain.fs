@@ -49,7 +49,6 @@ let solveForPosition (from: Position) (positionSet: FastSet<Position>) (validJum
 
     let isEvenPath (path: Position seq) : bool =
         let count = Seq.length path
-//            if count > 0 then printf $"{from} -> %A{path}\n"
         count > 2 && count % 2 = 0
 
     neighborsOf from
