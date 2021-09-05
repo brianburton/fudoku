@@ -1,17 +1,72 @@
 namespace Fudoku
 
-type FastSet<'T when 'T: equality> =
+[<CustomEquality; CustomComparison>]
+type FastSet<'T when 'T: equality and 'T: comparison> =
     private
     | FastSet of FastMap<'T, bool>
+    override x.Equals(yo) =
+        match x with
+        | FastSet xs ->
+            match yo with
+            | :? FastSet<'T> as y ->
+                match y with
+                | FastSet ys ->
+                    if (FastMap.length xs) <> (FastMap.length ys) then
+                        false
+                    else
+                        FastMap.keys xs
+                        |> Seq.skipWhile (fun k -> FastMap.containsKey k ys)
+                        |> Seq.isEmpty
+            | _ -> false
+
+    override x.GetHashCode() =
+        match x with
+        | FastSet xs ->
+            FastMap.keys xs
+            |> Seq.sort
+            |> Seq.fold (fun h k -> 31 * h + (hash k)) 0
+
+    interface System.IComparable with
+        member x.CompareTo yo =
+            match x with
+            | FastSet xs ->
+                match yo with
+                | :? FastSet<'T> as y ->
+                    match y with
+                    | FastSet ys ->
+                        let xl = FastMap.keys xs |> List.ofSeq |> List.sort
+                        let yl = FastMap.keys ys |> List.ofSeq |> List.sort
+
+                        let diff =
+                            Seq.zip xl yl
+                            |> Seq.map
+                                (fun (x0, y0) ->
+                                    if x0 = y0 then 0
+                                    else if x0 < y0 then -1
+                                    else 1)
+                            |> Seq.skipWhile (fun z -> z = 0)
+                            |> Seq.truncate 1
+
+                        if Seq.isEmpty diff then
+                            let xlen = List.length xl
+                            let ylen = List.length yl
+                            if xlen > ylen then 1
+                            elif xlen < ylen then -1
+                            else 0
+                        else
+                            Seq.head diff
+                | _ -> failwith "can only compare two sets"
+
     override this.ToString() =
         let str =
             match this with
             | FastSet m ->
                 FastMap.keys m
+                |> Seq.sort
                 |> Seq.map (fun k -> $"{k}")
                 |> Seq.fold (fun s k -> $"{s},{k}") ""
 
-        $"({str.Substring(1)})"
+        if String.length str = 0 then "()" else $"({str.Substring(1)})"
 
 module FastSet =
     let toSeq (FastSet set) = FastMap.keys set

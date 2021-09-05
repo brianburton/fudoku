@@ -74,6 +74,61 @@ let hiddenPairTest () =
     Assert.AreEqual(expected, actual.changes)
 
 [<Test>]
+let ``to string of FastSet`` () =
+    let emptySet = FastSet.empty ()
+    Assert.AreEqual("()", $"{emptySet}")
+
+    let single = FastSet.singleton 1
+    Assert.AreEqual("(1)", $"{single}")
+
+    let double = FastSet.add 2 single
+    Assert.AreEqual("(1,2)", $"{double}")
+
+    let compound =
+        FastSet.ofSeq [ emptySet
+                        single
+                        double ]
+
+    Assert.AreEqual("((),(1),(1,2))", $"{compound}")
+
+
+[<Test>]
+let ``equality of FastSet`` () =
+    let empty = FastSet.empty ()
+    Assert.AreEqual(true, empty.Equals empty)
+    Assert.AreEqual(false, empty.Equals emptyPuzzle)
+
+    let single = FastSet.singleton 1
+    Assert.AreEqual(true, single.Equals(FastSet.singleton 1))
+    Assert.AreEqual(false, empty.Equals single)
+    Assert.AreEqual(false, single.Equals empty)
+
+    let double = FastSet.add 2 single
+    Assert.AreEqual(false, double.Equals single)
+    Assert.AreEqual(false, single.Equals double)
+    Assert.AreEqual(true, double.Equals(FastSet.add 2 single))
+
+    let compound1 = FastSet.ofSeq [ empty; single; double ]
+    let compound2 = FastSet.ofSeq [ single; double; empty ]
+    Assert.AreEqual(true, compound1.Equals compound2)
+    Assert.AreEqual(true, compound2.Equals compound1)
+
+[<Test>]
+let ``comparison of FastSet`` () =
+    let s0 = FastSet.empty ()
+    let s1 = FastSet.add 1 s0
+    let s2 = FastSet.add 2 s0
+    let s12 = FastSet.union s1 s2
+    Assert.AreEqual(true, (s1 = s1))
+    Assert.AreEqual(true, (s2 > s1))
+    Assert.AreEqual(true, (s1 < s2))
+    Assert.AreEqual(true, (s2 >= s1))
+    Assert.AreEqual(true, (s2 > s12))
+    Assert.AreEqual(true, (s12 > s1))
+    Assert.AreEqual(true, (s12 < s2))
+    Assert.AreEqual(true, (s12 = s12))
+
+[<Test>]
 let setMaps () =
     let emptySet: FastSet<Digit> = FastSet.empty ()
 
