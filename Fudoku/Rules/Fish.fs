@@ -48,7 +48,7 @@ let convertToCellFish (lookup: CellFinder) (fish: Fish<Position>) =
 let allArePresent positions expected mapper =
     let digits = positions |> List.map mapper |> FastSet.ofSeq
     let expectedSet = FastSet.ofSeq expected
-    FastSet.equals digits expectedSet
+    digits = expectedSet
 
 let isValidFish positions rows cols =
     allArePresent positions rows (fun p -> p.row)

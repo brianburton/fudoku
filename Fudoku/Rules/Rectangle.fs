@@ -63,7 +63,7 @@ let listOrElseWith fn list = if List.isEmpty list then fn () else list
 // http://sudopedia.enjoysudoku.com/Uniqueness_Test.html
 let solveUniqueRectangle lookup rectangle =
     let singleCellWithExtraPencils pencils c d =
-        if (FastSet.equals pencils c.cellPencils)
+        if pencils = c.cellPencils
            && (FastSet.length d.cellPencils) <> 2 then
             [ (d.cellPos, RemovePencils pencils) ]
         else
@@ -72,7 +72,7 @@ let solveUniqueRectangle lookup rectangle =
     let twoCellsSharingOneExtraDigit pencils c d =
         let extraDigits = FastSet.difference c.cellPencils pencils
 
-        if (FastSet.notEquals c.cellPencils d.cellPencils)
+        if c.cellPencils <> d.cellPencils
            || (FastSet.length extraDigits) <> 1 then
             []
         else
@@ -112,7 +112,7 @@ let solveUniqueRectangle lookup rectangle =
 
         let presentPencils = FastSet.intersect commonPencils pencils
 
-        if FastSet.length presentPencils <> 1 then
+        if (FastSet.length presentPencils) <> 1 then
             []
         else
             [ (c.cellPos, RemovePencils presentPencils)

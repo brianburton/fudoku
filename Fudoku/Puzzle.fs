@@ -104,4 +104,4 @@ let isValidSolution (Puzzle puzzle) =
 
     AllGroups
     |> List.map allDigitsInGroup
-    |> List.forall (FastSet.equals AllDigitsSet)
+    |> List.forall ((=) AllDigitsSet)

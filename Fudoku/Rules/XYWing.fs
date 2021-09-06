@@ -55,7 +55,7 @@ let rule lookup =
         let d2 = FastSet.remove d1 b.cellPencils |> FastSet.head
 
         digitNeighbors b.cellPos d2
-        |> Seq.filter (fun c -> FastSet.equals c.cellPencils cds)
+        |> Seq.filter (fun c -> c.cellPencils = cds)
         |> Seq.map (third a)
 
     let first a =
