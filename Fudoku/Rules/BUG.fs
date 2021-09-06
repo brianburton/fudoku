@@ -3,6 +3,7 @@ module Fudoku.BUG
 open Domain
 open Puzzle
 
+// Searches all cells having pencils for a single cell with 3 digits while all others have 2 digits.
 let seekBUG (lookup: CellFinder) : Cell option =
     let summary =
         AllPositions
@@ -23,6 +24,8 @@ let seekBUG (lookup: CellFinder) : Cell option =
     | _, triples, _, _ when triples <> 1 -> None
     | _, _, _, triple -> triple
 
+// Turns a cell identified by seekBUG into a result for the digit of that cell
+// that appears 3 times among its row neighbors.
 let solveBUG (lookup: CellFinder) (bug: Cell) : Position * RuleResultChange =
     let rowMap = createDigitMap ((rowNeighbors bug.position) @ [ bug.position ]) lookup
 
