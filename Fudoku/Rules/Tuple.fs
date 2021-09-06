@@ -61,9 +61,8 @@ let solveTuple size lookup =
                     // this is a hidden tuple
                     let changes =
                         supersets
-                        |> List.map (fun s -> { s with cellPencils = FastSet.difference s.cellPencils digitSet })
-                        |> List.filter (fun s -> FastSet.length s.cellPencils > 0)
-                        |> List.map (fun s -> s.cellPos, RemovePencils s.cellPencils)
+                        |> List.filter (fun s -> FastSet.length (FastSet.difference s.cellPencils digitSet) > 0)
+                        |> List.map (fun s -> s.cellPos, RetainPencils(FastSet.intersect digitSet s.cellPencils))
 
                     changes |> toRule "hidden"
                 else

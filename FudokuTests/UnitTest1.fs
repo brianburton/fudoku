@@ -49,10 +49,6 @@ let singleCellTests () =
 
 [<Test>]
 let hiddenPairTest () =
-    let group = row (One)
-
-    let combo: Combination<Digit> = { inside = [ One; Two ]; outside = List.except [ One; Two ] AllDigits }
-
     let outsideDigits = List.except [ Three; Nine ] AllDigits
 
     let before =
@@ -70,6 +66,31 @@ let hiddenPairTest () =
     let expected = [ (position One One), retained; (position One Two), retained ]
 
     let actual = Tuple.solveTuple 2 (cellFinder before)
+
+    Assert.AreEqual(expected, actual.changes)
+
+[<Test>]
+let hiddenTripleTest () =
+    let insideDigits = [ Three; Five; Nine ]
+    let outsideDigits = List.except insideDigits AllDigits
+
+    let before =
+        emptyPuzzle
+        |> addCell (unsolvedCellRC One One (outsideDigits @ [ Three; Five ]))
+        |> addCell (unsolvedCellRC One Two (outsideDigits @ [ Five; Nine ]))
+        |> addCell (unsolvedCellRC One Four outsideDigits)
+        |> addCell (unsolvedCellRC One Five outsideDigits)
+        |> addCell (unsolvedCellRC One Six outsideDigits)
+        |> addCell (unsolvedCellRC One Seven outsideDigits)
+        |> addCell (unsolvedCellRC One Eight outsideDigits)
+        |> addCell (unsolvedCellRC One Nine outsideDigits)
+
+    let expected =
+        [ (position One One), (RetainPencils(FastSet.ofSeq [ Three; Five ]))
+          (position One Two), (RetainPencils(FastSet.ofSeq [ Five; Nine ]))
+          (position One Three), (RetainPencils(FastSet.ofSeq insideDigits)) ]
+
+    let actual = Tuple.solveTuple 3 (cellFinder before)
 
     Assert.AreEqual(expected, actual.changes)
 
@@ -127,6 +148,15 @@ let ``comparison of FastSet`` () =
     Assert.AreEqual(true, (s12 > s1))
     Assert.AreEqual(true, (s12 < s2))
     Assert.AreEqual(true, (s12 = s12))
+
+[<Test>]
+let ``to string of FastMap`` () =
+    let empty: FastMap<int, int> = FastMap.empty ()
+    Assert.AreEqual("[]", $"{empty}")
+    let single = FastMap.add 1 2 empty
+    Assert.AreEqual("[(1,2)]", $"{single}")
+    Assert.AreEqual("[(1,2),(3,6)]", $"{FastMap.add 3 6 single}")
+
 
 [<Test>]
 let setMaps () =
