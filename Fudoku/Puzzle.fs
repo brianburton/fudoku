@@ -1,10 +1,15 @@
 module Fudoku.Puzzle
 
-open Fudoku.Utils
 open Fudoku.Domain
 
 type PuzzleSolution = FastMap<Position, Digit>
-type Puzzle = private Puzzle of FastMap<Position, Cell>
+
+type Puzzle =
+    private
+    | Puzzle of FastMap<Position, Cell>
+    override this.ToString() =
+        match this with
+        | Puzzle m -> $"{m}"
 
 type RuleResultChange =
     | Solved of Digit
