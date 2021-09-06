@@ -16,8 +16,8 @@ let jumpsFrom (source: Position) (positions: FastSet<Position>) : FastSet<Positi
 
 let allPossibleJumps (positionList: List<Position>) (positionSet: FastSet<Position>) =
     positionList
-    |> List.map (fun p -> jumpsFrom p positionSet)
-    |> List.fold (fun ps p -> FastSet.union p ps) (FastSet.empty ())
+    |> List.map (swapArgs jumpsFrom positionSet)
+    |> List.fold FastSet.union (FastSet.empty ())
 
 let solveForPosition (from: Position) (positionSet: FastSet<Position>) (validJumps: FastSet<Position * Position>) : Position option =
     let neighborsOf pos =

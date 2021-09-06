@@ -1,5 +1,7 @@
 namespace Fudoku
 
+open Utils
+
 type SetMap<'K, 'V when 'K: comparison and 'V: comparison> =
     private
     | SetMap of FastMap<'K, FastSet<'V>>
@@ -23,7 +25,7 @@ module SetMap =
         let remover vs =
             vs
             |> Option.map (FastSet.remove value)
-            |> Option.filter (fun set -> not (FastSet.isEmpty set))
+            |> Option.filter FastSet.isNonEmpty
 
         setMap |> FastMap.change key remover |> SetMap
 
@@ -87,16 +89,16 @@ module SetMap =
 
     let ofSeq seq =
         seq
-        |> Seq.filter (fun (_, values) -> FastSet.length values > 0)
+        |> Seq.filter (fun (_, values) -> FastSet.isNonEmpty values)
         |> FastMap.ofSeq
         |> SetMap
 
     let intersectKeys ks setMap =
         ks
-        |> Seq.map (fun k -> get k setMap)
+        |> Seq.map (swapArgs get setMap)
         |> FastSet.ofIntersects
 
     let unionKeys ks setMap =
         ks
-        |> Seq.map (fun k -> get k setMap)
+        |> Seq.map (swapArgs get setMap)
         |> FastSet.ofUnions

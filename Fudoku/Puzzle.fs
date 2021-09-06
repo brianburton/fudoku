@@ -106,7 +106,7 @@ let isSolved (Puzzle puzzle) =
 let isValidSolution (Puzzle puzzle) =
     let allDigitsInGroup group =
         group
-        |> List.map (fun p -> FastMap.find p puzzle)
+        |> List.map (swapArgs FastMap.find puzzle)
         |> List.map cellDigit
         |> List.fold FastSet.union NoDigits
 

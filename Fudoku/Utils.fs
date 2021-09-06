@@ -2,6 +2,9 @@ module Fudoku.Utils
 
 open System.Linq
 
+// swaps order of two arg function for use in filtering
+let swapArgs fn a b = fn b a
+
 let memoize fn =
     let cache = System.Collections.Generic.Dictionary<_, _>()
 

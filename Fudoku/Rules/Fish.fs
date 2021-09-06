@@ -96,7 +96,7 @@ let private ruleTemplate (title: string) (fishFinder: CellFinder -> Fish<Cell> s
 let findCandidates len posMap =
     let ysForXs xs =
         xs
-        |> List.map (fun x -> SetMap.get x posMap)
+        |> List.map (swapArgs SetMap.get posMap)
         |> List.fold FastSet.union NoDigits
         |> FastSet.toList
 

@@ -1,5 +1,7 @@
 namespace Fudoku
 
+open Utils
+
 [<CustomEquality; CustomComparison>]
 type FastSet<'T when 'T: equality and 'T: comparison> =
     private
@@ -15,7 +17,7 @@ type FastSet<'T when 'T: equality and 'T: comparison> =
                         false
                     else
                         FastMap.keys xs
-                        |> Seq.skipWhile (fun k -> FastMap.containsKey k ys)
+                        |> Seq.skipWhile (swapArgs FastMap.containsKey ys)
                         |> Seq.isEmpty
             | _ -> false
 
@@ -77,6 +79,7 @@ module FastSet =
     let singleton x = FastMap.singleton x true |> FastSet
 
     let isEmpty (FastSet set) = FastMap.length set = 0
+    let isNonEmpty (FastSet set) = FastMap.length set > 0
 
     let add x (FastSet set) = FastMap.add x true set |> FastSet
 
@@ -96,13 +99,11 @@ module FastSet =
 
     let contains x (FastSet set) = FastMap.containsKey x set
 
-    let containsAll (FastSet set) xs =
-        xs
-        |> Seq.forall (fun x -> FastMap.containsKey x set)
+    let containsAll (FastSet set) xs = xs |> Seq.forall (swapArgs FastMap.containsKey set)
 
     let containsAny (FastSet set) xs =
         xs
-        |> Seq.tryFind (fun x -> FastMap.containsKey x set)
+        |> Seq.tryFind (swapArgs FastMap.containsKey set)
         |> Option.isSome
 
     let overlaps set other = containsAny set (toSeq other)
@@ -143,7 +144,7 @@ module FastSet =
         let extra = toSeq set |> Seq.filter (fun x -> not (f x))
         except extra set
 
-    let toFilter set = (fun x -> contains x set)
+    let toFilter set = (swapArgs contains set)
 
     let isSuperset set other = toSeq other |> containsAll set
 

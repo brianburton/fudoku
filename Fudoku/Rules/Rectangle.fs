@@ -84,7 +84,7 @@ let solveUniqueRectangle lookup rectangle =
     let twoCellsActingAsPair pencils c d =
         let extraDigits =
             FastSet.union c.cellPencils d.cellPencils
-            |> (fun u -> FastSet.difference u pencils)
+            |> (swapArgs FastSet.difference pencils)
 
         if (FastSet.length extraDigits) <> 2 then
             []
