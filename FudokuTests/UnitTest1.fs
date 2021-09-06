@@ -168,6 +168,7 @@ let setMaps () =
         |> SetMap.add One Three
         |> SetMap.add Two Four
 
+    Assert.AreEqual("[(1,(2,3)),(2,(4))]", $"{m}")
     Assert.AreEqual((FastSet.ofSeq [ Two; Three ]), (SetMap.get One m))
     Assert.AreEqual((FastSet.ofSeq [ Four ]), (SetMap.get Two m))
     Assert.AreEqual(emptySet, (SetMap.get Three m))

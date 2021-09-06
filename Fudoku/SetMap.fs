@@ -1,6 +1,10 @@
 namespace Fudoku
 
-type SetMap<'K, 'V when 'K: comparison and 'V: comparison> = private SetMap of FastMap<'K, FastSet<'V>>
+type SetMap<'K, 'V when 'K: comparison and 'V: comparison> =
+    private SetMap of FastMap<'K, FastSet<'V>>
+        override this.ToString() =
+            match this with
+            | SetMap m -> $"{m}"
 
 module SetMap =
     let empty () = SetMap(FastMap.empty ())
