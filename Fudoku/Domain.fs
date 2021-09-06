@@ -210,25 +210,10 @@ let groupPencils group =
 
 let summarizeCell lookup pos = { cellPos = pos; cellPencils = cellPencils (lookup pos) }
 
-let positionCombination (group: Position list) (combo: Combination<Digit>) =
-    let posMapper =
-        let map = List.zip AllDigits group |> FastMap.ofList
-        (fun digit -> FastMap.find digit map)
-
-    let digitMapper pos = posMapper pos
-    let insideCells = combo.inside |> List.map digitMapper
-    let outsideCells = combo.outside |> List.map digitMapper
-
-    { inside = insideCells; outside = outsideCells }
-
-let lookupCellCombination2 (lookup: CellFinder) (combo: Combination<Position>) =
+let lookupCellCombination (lookup: CellFinder) (combo: Combination<Position>) =
     let insideCells = combo.inside |> List.map lookup
     let outsideCells = combo.outside |> List.map lookup
     { inside = insideCells; outside = outsideCells }
-
-let lookupCellCombination (group: Position list) (combo: Combination<Digit>) (lookup: CellFinder) =
-    positionCombination group combo
-    |> lookupCellCombination2 lookup
 
 let cellPencilList cell =
     cellPencils cell
@@ -246,19 +231,3 @@ let validTupleLength max actual = (actual >= 2) && (actual <= max)
 let validTupleList len ps = validTupleLength len (List.length ps)
 
 let validTupleSet len ps = validTupleLength len (FastSet.length ps)
-
-let findTuplePositions len (lookup: CellFinder) (group: Position list) =
-    let map = createDigitMap group lookup
-
-    SetMap.toSeq map
-    |> Seq.map snd
-    |> Seq.filter (validTupleSet len)
-    |> Seq.fold FastSet.union NoPositions
-
-let findTupleCombinations len (lookup: CellFinder) (group: Position list) =
-    let positions = findTuplePositions len lookup group
-
-    FastSet.toList positions
-    |> combinations len
-    |> List.map (groupCombo group)
-    |> List.map (lookupCellCombination2 lookup)
