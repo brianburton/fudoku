@@ -50,6 +50,7 @@ type FastSet<'T when 'T: equality and 'T: comparison> =
                         if Seq.isEmpty diff then
                             let xlen = List.length xl
                             let ylen = List.length yl
+
                             if xlen > ylen then 1
                             elif xlen < ylen then -1
                             else 0
@@ -126,6 +127,10 @@ module FastSet =
         toSeq smaller |> addAll bigger
 
     let difference a b = except (toSeq b) a
+
+    let ofIntersects sets = if Seq.isEmpty sets then empty () else sets |> Seq.reduce intersect
+
+    let ofUnions sets = sets |> Seq.fold union (empty ())
 
     let map f set = toSeq set |> Seq.map f |> ofSeq
 

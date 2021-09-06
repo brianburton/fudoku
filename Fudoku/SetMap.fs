@@ -92,15 +92,11 @@ module SetMap =
         |> SetMap
 
     let intersectKeys ks setMap =
-        if Seq.isEmpty ks then
-            FastSet.empty ()
-        else
-            ks
-            |> Seq.skip 1
-            |> Seq.map (fun kk -> get kk setMap)
-            |> Seq.fold FastSet.intersect (get (Seq.head ks) setMap)
+        ks
+        |> Seq.map (fun k -> get k setMap)
+        |> FastSet.ofIntersects
 
     let unionKeys ks setMap =
         ks
         |> Seq.map (fun k -> get k setMap)
-        |> Seq.fold FastSet.union (FastSet.empty ())
+        |> FastSet.ofUnions
