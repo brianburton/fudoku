@@ -30,10 +30,10 @@ let emptyPuzzle: Puzzle =
     |> FastMap.ofSeq
     |> Puzzle
 
-let addToPuzzle (pz: Puzzle) (cells: Cell list) : Puzzle =
-    let addCell (Puzzle puzzle) cell = FastMap.add cell.position cell puzzle |> Puzzle
+let addToPuzzle (Puzzle puzzle) (cells: Cell list) : Puzzle =
+    let addCell pz cell = FastMap.add cell.position cell pz
 
-    cells |> List.fold addCell pz
+    cells |> List.fold addCell puzzle |> Puzzle
 
 let isCompleteSolution (s: PuzzleSolution) = (FastMap.length s) = AllPositions.Length
 

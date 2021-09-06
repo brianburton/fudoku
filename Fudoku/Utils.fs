@@ -37,16 +37,6 @@ let rec combinations len list =
     elif len = list.Length then single ()
     else normal list.Head list.Tail
 
-let findAndRemove (list: 'a list) (condition: 'a -> bool) =
-    let found = List.filter condition list
-
-    match found with
-    | [] -> None
-    | [ single ] -> Some(single, [])
-    | head :: _ -> Some(head, List.except [ head ] list)
-
-let listToOption list = if List.isEmpty list then None else Some list
-
 let intersectLists (xs: 'a seq) (ys: 'a seq) = xs.Intersect(ys) |> List.ofSeq
 
 let isNonEmptyList xs = not (List.isEmpty xs)
