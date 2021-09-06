@@ -88,9 +88,11 @@ let SingleSegmentDigitTriples =
 
 let position r c = { row = r; col = c }
 
+let pairToPosition = unpair position
+
 let positions rows cols =
     List.allPairs rows cols
-    |> List.map (fun (r, c) -> position r c)
+    |> List.map pairToPosition
 
 let AllPositions = positions AllDigits AllDigits
 let NoPositions: FastSet<Position> = FastSet.empty ()

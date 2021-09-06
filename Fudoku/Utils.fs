@@ -5,6 +5,9 @@ open System.Linq
 // swaps order of two arg function for use in filtering
 let swapArgs fn a b = fn b a
 
+// pass the values of a pair to a two arg function
+let unpair fn (a,b) = fn a b
+
 let memoize fn =
     let cache = System.Collections.Generic.Dictionary<_, _>()
 

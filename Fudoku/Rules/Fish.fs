@@ -18,19 +18,19 @@ type Fish<'a> =
 let createPositionFish (rowCombo: Combination<Digit>) (colCombo: Combination<Digit>) direction =
     let inside =
         List.allPairs rowCombo.inside colCombo.inside
-        |> List.map (fun (r, c) -> position r c)
+        |> List.map pairToPosition
 
     let outside =
         match direction with
         | RowFish -> List.allPairs rowCombo.inside colCombo.outside
         | ColFish -> List.allPairs rowCombo.outside colCombo.inside
-        |> List.map (fun (r, c) -> position r c)
+        |> List.map pairToPosition
 
     let affected =
         match direction with
         | RowFish -> List.allPairs rowCombo.outside colCombo.inside
         | ColFish -> List.allPairs rowCombo.inside colCombo.outside
-        |> List.map (fun (r, c) -> position r c)
+        |> List.map pairToPosition
 
     { fishRows = rowCombo.inside
       fishCols = colCombo.inside
