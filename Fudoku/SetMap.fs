@@ -1,10 +1,11 @@
 namespace Fudoku
 
 type SetMap<'K, 'V when 'K: comparison and 'V: comparison> =
-    private SetMap of FastMap<'K, FastSet<'V>>
-        override this.ToString() =
-            match this with
-            | SetMap m -> $"{m}"
+    private
+    | SetMap of FastMap<'K, FastSet<'V>>
+    override this.ToString() =
+        match this with
+        | SetMap m -> $"{m}"
 
 module SetMap =
     let empty () = SetMap(FastMap.empty ())
@@ -69,10 +70,7 @@ module SetMap =
 
     let length (SetMap setMap) = FastMap.length setMap
 
-    let keys (SetMap setMap) =
-        setMap
-        |> FastMap.toSeq
-        |> Seq.map fst
+    let keys (SetMap setMap) = setMap |> FastMap.toSeq |> Seq.map fst
 
     let folder splitter =
         fun setMap raw ->
@@ -94,13 +92,13 @@ module SetMap =
         |> SetMap
 
     let intersectKeys ks setMap =
-        match Seq.toList ks with
-        | [] -> FastSet.empty ()
-        | [k] -> get k setMap
-        | k::tail ->
-            tail
+        if Seq.isEmpty ks then
+            FastSet.empty ()
+        else
+            ks
+            |> Seq.skip 1
             |> Seq.map (fun kk -> get kk setMap)
-            |> Seq.fold FastSet.intersect (get k setMap)
+            |> Seq.fold FastSet.intersect (get (Seq.head ks) setMap)
 
     let unionKeys ks setMap =
         ks
