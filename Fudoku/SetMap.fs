@@ -73,7 +73,6 @@ module SetMap =
         setMap
         |> FastMap.toSeq
         |> Seq.map fst
-        |> List.ofSeq
 
     let folder splitter =
         fun setMap raw ->

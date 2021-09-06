@@ -31,8 +31,8 @@ let solveBUG (lookup: CellFinder) (bug: Cell) : Position * RuleResultChange =
 
     let threeDigit =
         SetMap.keys rowMap
-        |> List.map (fun digit -> digit, SetMap.getCount digit rowMap)
-        |> List.find (fun (_, count) -> count = 3)
+        |> Seq.map (fun digit -> digit, SetMap.getCount digit rowMap)
+        |> Seq.find (fun (_, count) -> count = 3)
         |> fst
 
     bug.position, Solved threeDigit
