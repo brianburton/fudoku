@@ -1,5 +1,6 @@
 module Fudoku.SingleBox
 
+open Utils
 open Domain
 open Puzzle
 
@@ -47,7 +48,6 @@ let rule (lookup: CellFinder) =
     let changes =
         Seq.ofList Combos
         |> Seq.map (fun c -> solveSingleBox c lookup)
-        |> Seq.tryFind (fun changes -> not (List.isEmpty changes))
-        |> Option.defaultValue []
+        |> firstNonEmptyList
 
     { rule = "single-box"; changes = changes }

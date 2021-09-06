@@ -1,6 +1,7 @@
 module Fudoku.Puzzle
 
-open Fudoku.Domain
+open Utils
+open Domain
 
 type PuzzleSolution = FastMap<Position, Digit>
 
@@ -37,6 +38,8 @@ let addToPuzzle (pz: Puzzle) (cells: Cell list) : Puzzle =
 let isCompleteSolution (s: PuzzleSolution) = (FastMap.length s) = AllPositions.Length
 
 let cellFinder (Puzzle pz) = fun p -> FastMap.find p pz
+
+let isNonEmptyResult result = isNonEmptyList result.changes
 
 let applyRuleResults results (Puzzle puzzle) =
     let solve p d pz = pz |> FastMap.add p (solvedCell p d)

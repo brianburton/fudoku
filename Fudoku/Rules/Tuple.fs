@@ -73,5 +73,5 @@ let solveTuple size lookup =
     AllGroups
     |> Seq.ofList
     |> Seq.collect solveGroup
-    |> Seq.tryFind (fun result -> List.length result.changes > 0)
+    |> Seq.tryFind isNonEmptyResult
     |> Option.defaultValue (toRule "no-tuple" [])

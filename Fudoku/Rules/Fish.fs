@@ -1,8 +1,8 @@
 module Fudoku.Fish
 
-open Fudoku.Domain
-open Fudoku.Utils
-open Fudoku.Puzzle
+open Domain
+open Utils
+open Puzzle
 
 type FishDirection =
     | RowFish
@@ -89,8 +89,7 @@ let private ruleTemplate (title: string) (fishFinder: CellFinder -> Fish<Cell> s
     let changes =
         fishFinder lookup
         |> Seq.map solveFish
-        |> Seq.tryFind (fun changes -> not (List.isEmpty changes))
-        |> Option.defaultValue []
+        |> firstNonEmptyList
 
     { rule = title; changes = changes }
 

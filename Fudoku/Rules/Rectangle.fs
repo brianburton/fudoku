@@ -150,7 +150,6 @@ let uniqueRectangleRule (lookup: CellFinder) : RuleResult =
         |> Seq.map (summarizeRectangle lookup)
         |> Seq.collect rotationsOf
         |> Seq.map (solveUniqueRectangle lookup)
-        |> Seq.tryFind (fun changes -> List.length changes > 0)
-        |> Option.defaultValue []
+        |> firstNonEmptyList
 
     { rule = "unique-rectangle"; changes = changes }

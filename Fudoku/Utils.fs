@@ -42,3 +42,10 @@ let findAndRemove (list: 'a list) (condition: 'a -> bool) =
 let listToOption list = if List.isEmpty list then None else Some list
 
 let intersectLists (xs: 'a seq) (ys: 'a seq) = xs.Intersect(ys) |> List.ofSeq
+
+let isNonEmptyList xs = not (List.isEmpty xs)
+
+let firstNonEmptyList seqOfLists =
+    seqOfLists
+    |> Seq.tryFind isNonEmptyList
+    |> Option.defaultValue []

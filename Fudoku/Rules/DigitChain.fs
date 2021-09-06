@@ -1,5 +1,6 @@
 module Fudoku.DigitChain
 
+open Utils
 open Domain
 open Puzzle
 
@@ -74,7 +75,6 @@ let rule lookup =
     let changes =
         SetMap.keys digitMap
         |> Seq.map (fun digit -> solveForDigit digit (SetMap.get digit digitMap))
-        |> Seq.tryFind (fun changes -> not (List.isEmpty changes))
-        |> Option.defaultValue []
+        |> firstNonEmptyList
 
     { rule = "digit-chain"; changes = changes }

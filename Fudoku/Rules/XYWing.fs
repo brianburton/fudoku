@@ -1,5 +1,6 @@
 module Fudoku.XYWing
 
+open Utils
 open Domain
 open Puzzle
 
@@ -29,11 +30,6 @@ let rule lookup =
         |> Seq.filter (fun ns -> List.length ns = 1)
         |> Seq.map List.head
         |> Seq.filter isActiveCell
-
-    let firstNonEmptyChanges listOfChanges =
-        listOfChanges
-        |> Seq.tryFind (fun changes -> not (List.isEmpty changes))
-        |> Option.defaultValue []
 
     let third a c =
         let removeDigit = FastSet.intersect a.cellPencils c.cellPencils
@@ -70,6 +66,6 @@ let rule lookup =
     let changes =
         activeCells
         |> Seq.collect first
-        |> firstNonEmptyChanges
+        |> firstNonEmptyList
 
     { rule = "xy-wing"; changes = changes }
