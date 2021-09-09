@@ -127,6 +127,7 @@ module FastSet =
 
         toSeq smaller |> addAll bigger
 
+    // returns a - b
     let difference a b = except (toSeq b) a
 
     let ofIntersects sets = if Seq.isEmpty sets then empty () else sets |> Seq.reduce intersect

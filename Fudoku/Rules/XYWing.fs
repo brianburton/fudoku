@@ -31,6 +31,11 @@ let rule lookup =
         |> Seq.map List.head
         |> Seq.filter isActiveCell
 
+    let solved n removeDigit =
+        FastSet.difference n.cellPencils removeDigit
+        |> FastSet.head
+        |> Solved
+
     let third a c =
         let removeDigit = FastSet.intersect a.cellPencils c.cellPencils
 
@@ -41,7 +46,7 @@ let rule lookup =
 
         neighbors
         |> List.filter (fun n -> FastSet.overlaps removeDigit n.cellPencils)
-        |> List.map (fun n -> n.cellPos, RemovePencils removeDigit)
+        |> List.map (fun n -> n.cellPos, solved n removeDigit)
 
     let second a d1 b =
         let cds =
