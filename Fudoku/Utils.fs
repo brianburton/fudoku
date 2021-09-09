@@ -45,3 +45,11 @@ let firstNonEmptyList seqOfLists =
     seqOfLists
     |> Seq.tryFind isNonEmptyList
     |> Option.defaultValue []
+
+let pass fn x =
+    fn x
+    x
+
+let passPrint label x =
+    printfn $"{label}: {x}"
+    x
