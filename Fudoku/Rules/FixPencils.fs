@@ -5,7 +5,7 @@ open Puzzle
 
 let fixPencilsRule lookup =
     let solveGroup group =
-        let cellsInGroup = List.map lookup group
+        let cellsInGroup = group |> List.map lookup
 
         let digitsInGroup =
             cellsInGroup
@@ -15,10 +15,10 @@ let fixPencilsRule lookup =
         let pencilsToRemoveFromCell c = FastSet.intersect digitsInGroup (cellPencils c)
 
         cellsInGroup
-        |> List.map (fun c -> c, pencilsToRemoveFromCell c)
+        |> List.map (fun c -> c.position, pencilsToRemoveFromCell c)
         |> List.filter (fun (_, ds) -> (FastSet.length ds) > 0)
-        |> List.map (fun (c, ds) -> c.position, RemovePencils ds)
+        |> List.map (fun (p, ds) -> p, RemovePencils ds)
 
-    let changes = List.collect solveGroup AllGroups
+    let changes = AllGroups |> List.collect solveGroup
 
     { rule = "fix-pencils"; changes = changes }
