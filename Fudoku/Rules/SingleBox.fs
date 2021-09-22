@@ -5,15 +5,13 @@ open Domain
 open Puzzle
 
 let private Combos =
-    let rowMappers =
-        AllDigits
-        |> List.map (fun r -> (fun c -> position r c))
+    // list of functions that map a column to all positions in that column
+    let colMappers = AllDigits |> List.map (fun r c -> position r c)
 
-    let colMappers =
-        AllDigits
-        |> List.map (fun c -> (fun r -> position r c))
+    // list of functions that map a row to all positions in that row
+    let rowMappers = AllDigits |> List.map (fun c r -> position r c)
 
-    let allMappers = rowMappers @ colMappers
+    let allMappers = colMappers @ rowMappers
 
     List.allPairs allMappers SingleSegmentDigitTriples
     |> List.map (fun (mapper, combo) -> combinationMapper mapper combo)

@@ -65,14 +65,14 @@ let digitCombo digits : Combination<Digit> = groupCombo AllDigits digits
 
 let segment d =
     match d with
-    | One -> SegOne
-    | Two -> SegOne
+    | One
+    | Two
     | Three -> SegOne
-    | Four -> SegTwo
-    | Five -> SegTwo
+    | Four
+    | Five
     | Six -> SegTwo
-    | Seven -> SegThree
-    | Eight -> SegThree
+    | Seven
+    | Eight
     | Nine -> SegThree
 
 let segmentDigits s =
@@ -90,9 +90,7 @@ let position r c = { row = r; col = c }
 
 let pairToPosition = unpair position
 
-let positions rows cols =
-    List.allPairs rows cols
-    |> List.map pairToPosition
+let positions rows cols = List.allPairs rows cols |> List.map pairToPosition
 
 let AllPositions = positions AllDigits AllDigits
 let NoPositions: FastSet<Position> = FastSet.empty ()

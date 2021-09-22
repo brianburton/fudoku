@@ -6,9 +6,9 @@ I've done solvers in other languages as well (C# and Kotlin) but enjoyed the F# 
 
 ## How it works
 
-The main program accepts the name of a file containing a puzzle to tbe solved.
+The main program accepts the name of a file containing a puzzle to be solved.
 The puzzle file is simply a text file containing 81 characters.
-Each character contains the known value in ever cell.
+Each character contains the known value in each cell.
 This can be either a digit (1-9) or a place holder (period or 0).
 Newlines can optionally be used to separate rows of the puzzle.
 
@@ -36,22 +36,22 @@ An efficient solver would try to do the maximum amount of work at each stage.
 ## Rules
 
 There are many more rules that could be added.
-The current set is able to solve a wide variety of puzzle though.
+The current set is able to solve a wide variety of puzzles though.
 I may add more over time.
 Here are the currently implemented rules:
 
 | Rule | Description |
 |---|---|
-| FixPencils | Looks for solved cells and remove their digits from adjacent cells. |
-| SingleDigit | Looks for cells with only one pencil and sets that digit as the solution for the cell. |
+| FixPencils | Looks for solved cells and removes their digits from adjacent cells. |
+| SingleDigit | Looks for cells with only one pencil digit and sets that digit as the solution for the cell. |
 | SingleCell | Looks for units (groups of adjacent cells) in which only one cell contains a certain digit and sets that digit as the solution of that cell. |
-| SingleBox | Looks for a row or column in which a digit is only possible within a single box and remove that digit from the pencils of other cells in the box. |
+| SingleBox | Looks for a row or column in which a digit is only possible within a single box and removes that digit from the pencils of other cells in the box. |
 | XYWing | A particular digit chain involving 3 cells with 2 pencils each. |
 | Tuples | Hidden or naked pairs, triples, or quads. |
 | Unique Rectangles | Looks for special cases to avoid non-unique solutions. |
 | X-Wing | A two row/column fish. |
 | DigitChain | Two color coloring of a chain of digits. |
-| BUG | When only one cell contains 3 pencil digits and the rest contain 2. |
+| BUG | When only one unsolved cell contains 3 pencil digits and the rest contain 2. |
 | Swordfish | A three row/column fish. |
 | Jellyfish | A four row/column fish. |
 
